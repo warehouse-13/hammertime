@@ -39,6 +39,9 @@ hammertime create
 # get 'mvm0' in 'ns0'
 hammertime get
 
+# get just the state of 'mvm0' in 'ns0' *see below
+hammertime get -s
+
 # get all mvms in 'ns0'
 hammertime list
 
@@ -47,4 +50,13 @@ hammertime delete
 ```
 
 The name and namespace are configurable, as are the GRPC address and port, but that is
-it. Run `ht --help` for details.
+it. Run `hammertime --help` for details.
+
+\* Why have a specific flag for getting the state? Why not just let users do whatever
+with `jq` or equivalent? Well, when the state is `PENDING` it is enum value `0`
+in our proto and, for reasons I have not had time to dig into properly yet,
+this comes across as `null`.. except when you call it explicitly on the received
+object. So it is not there when you print out everything. Furthermore, even when
+the value is set to some non-zero state, then all that will be in the printed result
+is the enum number, which is not very user friendly. I could totally do a conversion
+func which would solve both these issues, but I cnba right now.

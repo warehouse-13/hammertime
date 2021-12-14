@@ -28,6 +28,7 @@ func main() {
 		port         string
 		mvmName      string
 		mvmNamespace string
+		state        bool
 	)
 
 	app := &cli.App{
@@ -102,6 +103,13 @@ func main() {
 						Usage:       "microvm namespace",
 						Destination: &mvmNamespace,
 					},
+					&cli.BoolFlag{
+						Name:        "state",
+						Value:       false,
+						Aliases:     []string{"s"},
+						Usage:       "print just the state of the microvm",
+						Destination: &state,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
@@ -113,6 +121,12 @@ func main() {
 					res, err := getMicrovm(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
 					if err != nil {
 						return err
+					}
+
+					if state {
+						fmt.Println(res.Microvm.Status.State)
+
+						return nil
 					}
 
 					return prettyPrint(res)
