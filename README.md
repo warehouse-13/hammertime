@@ -49,14 +49,21 @@ hammertime list
 hammertime delete
 ```
 
-The name and namespace are configurable, as are the GRPC address and port, but that is
-it. Run `hammertime --help` for details.
+The name and namespace are configurable, as are the GRPC address and port.
+There is the option to create with an SSH key.
+You can also pass a full json configfile on the create if you want to override
+everything (see [example.json](example.json)).
+
+Run `hammertime --help` for details.
 
 \* Why have a specific flag for getting the state? Why not just let users do whatever
 with `jq` or equivalent? Well, when the state is `PENDING` it is enum value `0`
-in our proto and, for reasons I have not had time to dig into properly yet,
-this comes across as `null`.. except when you call it explicitly on the received
-object. So it is not there when you print out everything. Furthermore, even when
+in our proto, which ends up equating to a `null` value and so that is what ends
+up being populated (or doesn't really, but get it).
+When you call it explicitly on the received object, the client will understand
+that it is not actually `null` and translate the `0` properly.
+Furthermore, even when
 the value is set to some non-zero state, then all that will be in the printed result
-is the enum number, which is not very user friendly. I could totally do a conversion
+is the enum number, which is not very user friendly. So this is why we have the
+flag. I could totally do a conversion
 func which would solve both these issues, but I cnba right now.

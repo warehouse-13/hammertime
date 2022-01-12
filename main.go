@@ -33,6 +33,7 @@ func main() {
 		mvmName      string
 		mvmNamespace string
 		sshKeyPath   string
+		jsonSpec     string
 		state        bool
 	)
 
@@ -78,8 +79,15 @@ func main() {
 						Name:        "public-key-path",
 						Value:       "",
 						Aliases:     []string{"k"},
-						Usage:       "path to file containing public SSH key",
+						Usage:       "path to file containing public SSH key to be added to root user",
 						Destination: &sshKeyPath,
+					},
+					&cli.StringFlag{
+						Name:        "spec",
+						Value:       "",
+						Aliases:     []string{"s"},
+						Usage:       "path to json file containing full flintlock spec. will override other flags",
+						Destination: &jsonSpec,
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -89,7 +97,7 @@ func main() {
 					}
 					defer conn.Close()
 
-					res, err := createMicrovm(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace, sshKeyPath)
+					res, err := createMicrovm(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace, sshKeyPath, jsonSpec)
 					if err != nil {
 						return err
 					}
@@ -224,11 +232,24 @@ func prettyPrint(response interface{}) error {
 	return nil
 }
 
-func createMicrovm(client v1alpha1.MicroVMClient, name, ns, sshPath string) (*v1alpha1.CreateMicroVMResponse, error) {
-	mvm, err := defaultMicroVM(name, ns, sshPath)
-	if err != nil {
-		return nil, err
+func createMicrovm(client v1alpha1.MicroVMClient, name, ns, sshPath, jsonSpec string) (*v1alpha1.CreateMicroVMResponse, error) {
+	var (
+		mvm *types.MicroVMSpec
+		err error
+	)
+
+	if jsonSpec != "" {
+		mvm, err = loadSpecFromFile(jsonSpec)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		mvm, err = defaultMicroVM(name, ns, sshPath)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	createReq := v1alpha1.CreateMicroVMRequest{
 		Microvm: mvm,
 	}
@@ -306,7 +327,7 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 		},
 		RootVolume: &types.Volume{
 			Id:         "root",
-			IsReadOnly: true,
+			IsReadOnly: false,
 			MountPoint: "/",
 			Source: &types.VolumeSource{
 				ContainerSource: pointyString(cloudImage),
@@ -388,4 +409,18 @@ func getKeyFromPath(path string) (string, error) {
 	}
 
 	return string(key), nil
+}
+
+func loadSpecFromFile(file string) (*types.MicroVMSpec, error) {
+	dat, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var spec *types.MicroVMSpec
+	if err := json.Unmarshal(dat, &spec); err != nil {
+		return nil, err
+	}
+
+	return spec, nil
 }
