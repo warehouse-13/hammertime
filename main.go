@@ -2,15 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/urfave/cli/v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
+	"github.com/weaveworks/flintlock/client/cloudinit"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -28,6 +32,7 @@ func main() {
 		port         string
 		mvmName      string
 		mvmNamespace string
+		sshKeyPath   string
 		state        bool
 	)
 
@@ -69,6 +74,13 @@ func main() {
 						Usage:       "microvm namespace",
 						Destination: &mvmNamespace,
 					},
+					&cli.StringFlag{
+						Name:        "public-key-path",
+						Value:       "",
+						Aliases:     []string{"k"},
+						Usage:       "path to file containing public SSH key",
+						Destination: &sshKeyPath,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
@@ -77,7 +89,7 @@ func main() {
 					}
 					defer conn.Close()
 
-					res, err := createMicrovm(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
+					res, err := createMicrovm(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace, sshKeyPath)
 					if err != nil {
 						return err
 					}
@@ -212,9 +224,13 @@ func prettyPrint(response interface{}) error {
 	return nil
 }
 
-func createMicrovm(client v1alpha1.MicroVMClient, name, ns string) (*v1alpha1.CreateMicroVMResponse, error) {
+func createMicrovm(client v1alpha1.MicroVMClient, name, ns, sshPath string) (*v1alpha1.CreateMicroVMResponse, error) {
+	mvm, err := defaultMicroVM(name, ns, sshPath)
+	if err != nil {
+		return nil, err
+	}
 	createReq := v1alpha1.CreateMicroVMRequest{
-		Microvm: defaultMicroVM(name, ns),
+		Microvm: mvm,
 	}
 	resp, err := client.CreateMicroVM(context.Background(), &createReq)
 	if err != nil {
@@ -262,11 +278,20 @@ func listMicrovms(client v1alpha1.MicroVMClient, name, ns string) (*v1alpha1.Lis
 	return resp, nil
 }
 
-func defaultMicroVM(name, namespace string) *types.MicroVMSpec {
+func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error) {
 	var (
-		kernelImage = "docker.io/richardcase/ubuntu-bionic-kernel:0.0.11"
-		cloudImage  = "docker.io/richardcase/ubuntu-bionic-test:cloudimage_v0.0.1"
+		kernelImage = "ghcr.io/weaveworks/flintlock-kernel:5.10.77"
+		cloudImage  = "ghcr.io/weaveworks/capmvm-kubernetes:1.21.8"
 	)
+
+	metaData, err := createMetadata(name, namespace)
+	if err != nil {
+		return nil, err
+	}
+	userData, err := createUserData(name, sshPath)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MicroVMSpec{
 		Id:         name,
@@ -276,12 +301,8 @@ func defaultMicroVM(name, namespace string) *types.MicroVMSpec {
 		Kernel: &types.Kernel{
 			Image:            kernelImage,
 			Cmdline:          "console=ttyS0 reboot=k panic=1 pci=off i8042.noaux i8042.nomux i8042.nopnp i8042.dumbkbd ds=nocloud-net;s=http://169.254.169.254/latest/",
-			Filename:         pointyString("vmlinux"),
+			Filename:         pointyString("boot/vmlinux"),
 			AddNetworkConfig: true,
-		},
-		Initrd: &types.Initrd{
-			Image:    kernelImage,
-			Filename: pointyString("initrd-generic"),
 		},
 		RootVolume: &types.Volume{
 			Id:         "root",
@@ -293,17 +314,78 @@ func defaultMicroVM(name, namespace string) *types.MicroVMSpec {
 		},
 		Interfaces: []*types.NetworkInterface{
 			{
-				GuestDeviceName: "eth0",
+				GuestDeviceName: "eth1",
 				Type:            0,
 			},
 		},
 		Metadata: map[string]string{
-			"meta-data": "aW5zdGFuY2VfaWQ6IG5zMS9tdm0wCmxvY2FsX2hvc3RuYW1lOiBtdm0wCnBsYXRmb3JtOiBsaXF1aWRfbWV0YWwK",
-			"user-data": "I2Nsb3VkLWNvbmZpZwpob3N0bmFtZTogbXZtMApmcWRuOiBtdm0wLmZydWl0Y2FzZQp1c2VyczoKICAgIC0gbmFtZTogcm9vdAogICAgICBzc2hfYXV0aG9yaXplZF9rZXlzOgogICAgICAgIC0gfAogICAgICAgICAgc3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUdzbStWSSsyVk5WWFBDRmVmbFhrQTVKY21zMzByajFGUFFjcFNTdDFrdVYgcmljaGFyZEB3ZWF2ZS53b3JrcwpkaXNhYmxlX3Jvb3Q6IGZhbHNlCnBhY2thZ2VfdXBkYXRlOiBmYWxzZQpmaW5hbF9tZXNzYWdlOiBUaGUgcmVpZ25pdGVkIGJvb3RlZCBzeXN0ZW0gaXMgZ29vZCB0byBnbyBhZnRlciAkVVBUSU1FIHNlY29uZHMKcnVuY21kOgogICAgLSBkaGNsaWVudCAtcgogICAgLSBkaGNsaWVudAo=",
+			"meta-data": metaData,
+			"user-data": userData,
 		},
-	}
+	}, nil
 }
 
 func pointyString(v string) *string {
 	return &v
+}
+
+func createUserData(name, sshPath string) (string, error) {
+	defaultUser := cloudinit.User{
+		Name: "root",
+	}
+
+	if sshPath != "" {
+		sshKey, err := getKeyFromPath(sshPath)
+		if err != nil {
+			return "", err
+		}
+		defaultUser.SSHAuthorizedKeys = []string{
+			sshKey,
+		}
+	}
+
+	// TODO: remove the boot command temporary fix after image-builder #6
+	userData := &cloudinit.UserData{
+		HostName: name,
+		Users: []cloudinit.User{
+			defaultUser,
+		},
+		FinalMessage: "The Liquid Metal booted system is good to go after $UPTIME seconds",
+		BootCommands: []string{
+			"ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf",
+		},
+	}
+
+	data, err := yaml.Marshal(userData)
+	if err != nil {
+		return "", fmt.Errorf("marshalling bootstrap data: %w", err)
+	}
+
+	dataWithHeader := append([]byte("#cloud-config\n"), data...)
+
+	return base64.StdEncoding.EncodeToString(dataWithHeader), nil
+}
+
+func createMetadata(name, ns string) (string, error) {
+	userMetadata := cloudinit.Metadata{
+		InstanceID:    fmt.Sprintf("%s/%s", ns, name),
+		LocalHostname: name,
+		Platform:      "liquid_metal",
+	}
+
+	userMeta, err := yaml.Marshal(userMetadata)
+	if err != nil {
+		return "", fmt.Errorf("unable to marshal metadata: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(userMeta), nil
+}
+
+func getKeyFromPath(path string) (string, error) {
+	key, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	return string(key), nil
 }
