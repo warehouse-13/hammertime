@@ -83,9 +83,9 @@ func main() {
 						Destination: &sshKeyPath,
 					},
 					&cli.StringFlag{
-						Name:        "spec",
+						Name:        "file",
 						Value:       "",
-						Aliases:     []string{"s"},
+						Aliases:     []string{"f"},
 						Usage:       "path to json file containing full flintlock spec. will override other flags",
 						Destination: &jsonSpec,
 					},
@@ -130,8 +130,24 @@ func main() {
 						Usage:       "print just the state of the microvm",
 						Destination: &state,
 					},
+					&cli.StringFlag{
+						Name:        "file",
+						Value:       "",
+						Aliases:     []string{"f"},
+						Usage:       "path to json file containing full flintlock spec. will override name and namespace flags",
+						Destination: &jsonSpec,
+					},
 				},
 				Action: func(c *cli.Context) error {
+					if jsonSpec != "" {
+						spec, err := loadSpecFromFile(jsonSpec)
+						if err != nil {
+							return err
+						}
+						mvmName = spec.Id
+						mvmNamespace = spec.Namespace
+					}
+
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
 					if err != nil {
 						return err
@@ -197,8 +213,24 @@ func main() {
 						Usage:       "microvm namespace",
 						Destination: &mvmNamespace,
 					},
+					&cli.StringFlag{
+						Name:        "file",
+						Value:       "",
+						Aliases:     []string{"f"},
+						Usage:       "path to json file containing full flintlock spec. will override other flags",
+						Destination: &jsonSpec,
+					},
 				},
 				Action: func(c *cli.Context) error {
+					if jsonSpec != "" {
+						spec, err := loadSpecFromFile(jsonSpec)
+						if err != nil {
+							return err
+						}
+						mvmName = spec.Id
+						mvmNamespace = spec.Namespace
+					}
+
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
 					if err != nil {
 						return err

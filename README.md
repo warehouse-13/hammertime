@@ -51,7 +51,7 @@ hammertime delete
 
 The name and namespace are configurable, as are the GRPC address and port.
 There is the option to create with an SSH key.
-You can also pass a full json configfile on the create if you want to override
+You can also pass a full json configfile to `create`, `get` and `delete` if you want to override
 everything (see [example.json](example.json)).
 
 Run `hammertime --help` for details.
