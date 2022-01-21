@@ -353,7 +353,6 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 		MemoryInMb: 2048,
 		Kernel: &types.Kernel{
 			Image:            kernelImage,
-			Cmdline:          "console=ttyS0 reboot=k panic=1 pci=off i8042.noaux i8042.nomux i8042.nopnp i8042.dumbkbd ds=nocloud-net;s=http://169.254.169.254/latest/",
 			Filename:         pointyString("boot/vmlinux"),
 			AddNetworkConfig: true,
 		},
