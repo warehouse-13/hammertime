@@ -31,6 +31,7 @@ func main() {
 		dialTarget   string
 		port         string
 		mvmName      string
+		mvmUID       string
 		mvmNamespace string
 		sshKeyPath   string
 		jsonSpec     string
@@ -110,18 +111,10 @@ func main() {
 				Usage: "get an existing microvm",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:        "name",
-						Value:       defaultMvmName,
-						Aliases:     []string{"n"},
-						Usage:       "microvm name",
-						Destination: &mvmName,
-					},
-					&cli.StringFlag{
-						Name:        "namespace",
-						Value:       defaultMvmNamespace,
-						Aliases:     []string{"ns"},
-						Usage:       "microvm namespace",
-						Destination: &mvmNamespace,
+						Name:        "id",
+						Aliases:     []string{"i"},
+						Usage:       "microvm uuid",
+						Destination: &mvmUID,
 					},
 					&cli.BoolFlag{
 						Name:        "state",
@@ -144,8 +137,7 @@ func main() {
 						if err != nil {
 							return err
 						}
-						mvmName = spec.Id
-						mvmNamespace = spec.Namespace
+						mvmUID = *spec.Uid
 					}
 
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
@@ -154,7 +146,7 @@ func main() {
 					}
 					defer conn.Close()
 
-					res, err := getMicrovm(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
+					res, err := getMicrovm(v1alpha1.NewMicroVMClient(conn), mvmUID)
 					if err != nil {
 						return err
 					}
@@ -200,18 +192,10 @@ func main() {
 				Usage: "delete an existing microvm",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:        "name",
-						Value:       defaultMvmName,
-						Aliases:     []string{"n"},
-						Usage:       "microvm name",
-						Destination: &mvmName,
-					},
-					&cli.StringFlag{
-						Name:        "namespace",
-						Value:       defaultMvmNamespace,
-						Aliases:     []string{"ns"},
-						Usage:       "microvm namespace",
-						Destination: &mvmNamespace,
+						Name:        "id",
+						Aliases:     []string{"i"},
+						Usage:       "microvm uid",
+						Destination: &mvmUID,
 					},
 					&cli.StringFlag{
 						Name:        "file",
@@ -227,8 +211,7 @@ func main() {
 						if err != nil {
 							return err
 						}
-						mvmName = spec.Id
-						mvmNamespace = spec.Namespace
+						mvmUID = *spec.Uid
 					}
 
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
@@ -237,7 +220,7 @@ func main() {
 					}
 					defer conn.Close()
 
-					res, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
+					res, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), mvmUID)
 					if err != nil {
 						return err
 					}
@@ -293,10 +276,9 @@ func createMicrovm(client v1alpha1.MicroVMClient, name, ns, sshPath, jsonSpec st
 	return resp, nil
 }
 
-func getMicrovm(client v1alpha1.MicroVMClient, name, ns string) (*v1alpha1.GetMicroVMResponse, error) {
+func getMicrovm(client v1alpha1.MicroVMClient, uid string) (*v1alpha1.GetMicroVMResponse, error) {
 	getReq := v1alpha1.GetMicroVMRequest{
-		Id:        name,
-		Namespace: ns,
+		Uid: uid,
 	}
 	resp, err := client.GetMicroVM(context.Background(), &getReq)
 	if err != nil {
@@ -306,10 +288,9 @@ func getMicrovm(client v1alpha1.MicroVMClient, name, ns string) (*v1alpha1.GetMi
 	return resp, nil
 }
 
-func deleteMicroVM(client v1alpha1.MicroVMClient, name, ns string) (*emptypb.Empty, error) {
+func deleteMicroVM(client v1alpha1.MicroVMClient, uid string) (*emptypb.Empty, error) {
 	delReq := v1alpha1.DeleteMicroVMRequest{
-		Id:        name,
-		Namespace: ns,
+		Uid: uid,
 	}
 	resp, err := client.DeleteMicroVM(context.Background(), &delReq)
 	if err != nil {
@@ -366,8 +347,8 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 		},
 		Interfaces: []*types.NetworkInterface{
 			{
-				GuestDeviceName: "eth1",
-				Type:            0,
+				DeviceId: "eth1",
+				Type:     0,
 			},
 		},
 		Metadata: map[string]string{

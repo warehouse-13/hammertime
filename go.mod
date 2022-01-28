@@ -4,9 +4,11 @@ go 1.17
 
 require (
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/weaveworks/flintlock/api v0.0.0-20211208132553-00580350aa87
+	github.com/weaveworks/flintlock/api v0.0.0-20220126104712-74e49997e1bf
+	github.com/weaveworks/flintlock/client v0.0.0-20220110105514-c0ec7b5054ee
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -15,10 +17,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/weaveworks/flintlock/client v0.0.0-20220110105514-c0ec7b5054ee // indirect
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

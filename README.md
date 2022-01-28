@@ -1,7 +1,6 @@
 ## Hammertime
 
-A very basic, very untested, very unrefactored, and (likely) very unmaintained
-CLI tool for interacting with [flintlock](https://github.com/weaveworks/flintlock) servers.
+A very basic CLI tool for interacting with [flintlock](https://github.com/weaveworks/flintlock) servers.
 
 (Those of you who know your archaic gun mechanisms will understand the name and no doubt
 find it hilarious.) (You are welcome.)
@@ -9,6 +8,15 @@ find it hilarious.) (You are welcome.)
 Why did I make this? Well we used to use another generic GRPC client, but we discovered
 that, for reasons I do not yet know, it [didn't like some of the enum values we returned](https://github.com/weaveworks/flintlock/issues/313#issuecomment-991015159).
 So here we are.
+
+I have kept it around because it makes working with flintlock very straightforward.
+
+### Versioning
+
+Latest of hammertime is always aligned with latest of flintlock.
+Check the release notes for potential breakages.
+
+TODO compatibility table
 
 ### Installation
 
@@ -28,25 +36,24 @@ Alias to `ht` if you like.
 
 ### Usage
 
-4 commands, very few configuration options. Everything has defaults so you don't need
-to pass any flags at all if you don't want to. Each command simply spits out the response
+4 commands, very few configuration options. Each command simply spits out the response
 as JSON so you can pipe to `jq` or whatever as you like.
 
 ```bash
-# create 'mvm0' in 'ns0'
+# create 'mvm0' in 'ns0' (take note of the UID after creation)
 hammertime create
 
-# get 'mvm0' in 'ns0'
-hammertime get
+# get
+hammertime get -i <UUID>
 
 # get just the state of 'mvm0' in 'ns0' *see below
-hammertime get -s
+hammertime get -i <UUID> -s
 
-# get all mvms in 'ns0'
+# get all mvms
 hammertime list
 
-# delete 'mvm0' from 'ns0'
-hammertime delete
+# delete
+hammertime delete -i <UID>
 ```
 
 The name and namespace are configurable, as are the GRPC address and port.
