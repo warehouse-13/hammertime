@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Callisto13/hammertime/pkg/utils"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 
@@ -334,7 +335,7 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 		MemoryInMb: 2048,
 		Kernel: &types.Kernel{
 			Image:            kernelImage,
-			Filename:         pointyString("boot/vmlinux"),
+			Filename:         utils.PointyString("boot/vmlinux"),
 			AddNetworkConfig: true,
 		},
 		RootVolume: &types.Volume{
@@ -342,7 +343,7 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 			IsReadOnly: false,
 			MountPoint: "/",
 			Source: &types.VolumeSource{
-				ContainerSource: pointyString(cloudImage),
+				ContainerSource: utils.PointyString(cloudImage),
 			},
 		},
 		Interfaces: []*types.NetworkInterface{
@@ -356,10 +357,6 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 			"user-data": userData,
 		},
 	}, nil
-}
-
-func pointyString(v string) *string {
-	return &v
 }
 
 func createUserData(name, sshPath string) (string, error) {
