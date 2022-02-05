@@ -4,7 +4,7 @@ build: ## Build hammertime
 
 .PHONY: test
 test: ## Run tests
-	@echo "you think i wrote tests for this bruh? lol"
+	ginkgo -r test
 
 .PHONY: docs
 docs: ## Update the readme help docs
