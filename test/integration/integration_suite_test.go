@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -32,6 +33,13 @@ func TestIntegration(t *testing.T) {
 		serverCmd := exec.Command(serverBin)
 		serverSession, err = gexec.Start(serverCmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
+
+		// Sometimes the server doesn't start immediately, so we check that an
+		// endpoint is reachable before we carry on with the test.
+		getCmd := command{action: "get", args: []string{"--id", "foobar"}}
+		getSession := executeCommand(getCmd)
+		Eventually(getSession, "10s").Should(gexec.Exit(1))
+		Eventually(getSession.Err).Should(gbytes.Say("OHH WHAT A DISASTER"))
 	})
 
 	AfterSuite(func() {
@@ -40,4 +48,18 @@ func TestIntegration(t *testing.T) {
 	})
 
 	RunSpecs(t, "Integration Suite")
+}
+
+type command struct {
+	action string
+	args   []string
+}
+
+func executeCommand(command command) *gexec.Session {
+	var args = []string{"--grpc-address", address, command.action}
+	cmd := exec.Command(cliBin, append(args, command.args...)...)
+	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Expect(err).NotTo(HaveOccurred())
+
+	return session
 }
