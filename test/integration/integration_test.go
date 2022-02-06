@@ -2,7 +2,6 @@ package integration_test
 
 import (
 	"encoding/json"
-	"os/exec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -147,18 +146,3 @@ var _ = Describe("Integration", func() {
 		})
 	})
 })
-
-type command struct {
-	action string
-	args   []string
-}
-
-func executeCommand(command command) *gexec.Session {
-	var args = []string{"--grpc-address", address, command.action}
-	args = append(args, command.args...)
-	cmd := exec.Command(cliBin, args...)
-	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-
-	return session
-}
