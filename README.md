@@ -74,3 +74,11 @@ the value is set to some non-zero state, then all that will be in the printed re
 is the enum number, which is not very user friendly. So this is why we have the
 flag. I could totally do a conversion
 func which would solve both these issues, but I cnba right now.
+
+
+### Development
+
+#### Testing
+
+Test can be run with `make test`.
+For a list of all make commands, run `make help`.
