@@ -49,7 +49,7 @@ hammertime get -i <UUID>
 # get just the state of 'mvm0' in 'ns0' *see below
 hammertime get -i <UUID> -s
 
-# get all mvms
+# get all mvms across all namespaces
 hammertime list
 
 # delete

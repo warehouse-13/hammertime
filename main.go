@@ -163,11 +163,11 @@ func main() {
 			},
 			{
 				Name:  "list",
-				Usage: "list all microvms in namespace",
+				Usage: "list all microvms across all namespaces",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:        "namespace",
-						Value:       defaultMvmNamespace,
+						Value:       "",
 						Aliases:     []string{"ns"},
 						Usage:       "microvm namespace",
 						Destination: &mvmNamespace,
@@ -180,7 +180,7 @@ func main() {
 					}
 					defer conn.Close()
 
-					res, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
+					res, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), "", mvmNamespace)
 					if err != nil {
 						return err
 					}
