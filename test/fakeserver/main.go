@@ -96,14 +96,16 @@ func (s *fakeServer) ListMicroVMs(ctx context.Context, req *mvmv1.ListMicroVMsRe
 	microvms := []*types.MicroVM{}
 
 	for _, spec := range s.savedSpecs {
-		m := &types.MicroVM{
-			Version: 0,
-			Spec:    spec,
-			Status: &types.MicroVMStatus{
-				State: types.MicroVMStatus_CREATED,
-			},
+		if req.Namespace == "" || req.Namespace == spec.Namespace {
+			m := &types.MicroVM{
+				Version: 0,
+				Spec:    spec,
+				Status: &types.MicroVMStatus{
+					State: types.MicroVMStatus_CREATED,
+				},
+			}
+			microvms = append(microvms, m)
 		}
-		microvms = append(microvms, m)
 	}
 
 	return &mvmv1.ListMicroVMsResponse{
