@@ -56,7 +56,7 @@ hammertime list
 hammertime delete -i <UID>
 
 # delete all mvms everywhere
-hammertime clear
+hammertime delete --all
 ```
 
 The name and namespace are configurable, as are the GRPC address and port.

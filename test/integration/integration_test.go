@@ -22,9 +22,8 @@ var _ = Describe("Integration", func() {
 	)
 
 	AfterEach(func() {
-		cmd := command{action: "clear"}
-		session := executeCommand(cmd)
-		Eventually(session).Should(gexec.Exit(0))
+		cmd := command{action: "delete", args: []string{"--all"}}
+		Eventually(executeCommand(cmd)).Should(gexec.Exit(0))
 	})
 
 	Context("Create", func() {
@@ -201,6 +200,90 @@ var _ = Describe("Integration", func() {
 				Eventually(getSession.Err).Should(gbytes.Say("OHH WHAT A DISASTER"))
 			})
 		})
+
+		Context("--all", func() {
+			BeforeEach(func() {
+				// create ns0/mvm0
+				createCmd := command{action: "create"}
+				Eventually(executeCommand(createCmd)).Should(gexec.Exit(0))
+
+				// create ns0/Pantalaimon
+				createCmd = command{action: "create", args: []string{"--name", name}}
+				Eventually(executeCommand(createCmd)).Should(gexec.Exit(0))
+
+				// create Casper/Pantalaimon
+				createCmd = command{action: "create", args: []string{"--namespace", namespace, "--name", name}}
+				Eventually(executeCommand(createCmd)).Should(gexec.Exit(0))
+
+				var list v1alpha1.ListMicroVMsResponse
+				listCmd := command{action: "list"}
+				session := executeCommand(listCmd)
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
+				Expect(list.Microvm).To(HaveLen(4))
+			})
+
+			It("deletes all existing microvms across all namespaces", func() {
+				cmd := command{action: "delete", args: []string{"--all"}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var list v1alpha1.ListMicroVMsResponse
+				cmd = command{action: "list"}
+				session = executeCommand(cmd)
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
+				// all should be gone
+				Expect(list.Microvm).To(HaveLen(0))
+			})
+
+			It("deletes all existing microvms in a specific namespace", func() {
+				cmd := command{action: "delete", args: []string{"--all", "--namespace", defaultNamespace}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var list v1alpha1.ListMicroVMsResponse
+				cmd = command{action: "list"}
+				session = executeCommand(cmd)
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
+				// Casper/Pantalaimon should remain
+				Expect(list.Microvm).To(HaveLen(1))
+			})
+
+			It("deletes all existing microvms in a specific namespace/name group", func() {
+				cmd := command{action: "delete", args: []string{"--all", "--namespace", defaultNamespace, "--name", defaultName}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var list v1alpha1.ListMicroVMsResponse
+				cmd = command{action: "list"}
+				session = executeCommand(cmd)
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
+				// Casper/Pantalaimon, ns0/Pantalaimon and ns0/DELETEME should remain
+				Expect(list.Microvm).To(HaveLen(3))
+			})
+
+			Context("when --name is provided but --namespace is not", func() {
+				It("prints the error", func() {
+					cmd := command{action: "delete", args: []string{"--all", "--name", defaultName}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(1))
+					Eventually(session.Err).Should(gbytes.Say("required: --namespace"))
+				})
+			})
+
+			Context("when --name and/or --namespace is provided but --all is not", func() {
+				It("prints the error", func() {
+					cmd := command{action: "delete", args: []string{"--name", defaultName}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(1))
+					Eventually(session.Err).Should(gbytes.Say("required: --all"))
+
+					cmd = command{action: "delete", args: []string{"--namespace", defaultNamespace}}
+					session = executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(1))
+					Eventually(session.Err).Should(gbytes.Say("required: --all"))
+				})
+			})
+		})
 	})
 
 	Context("List", func() {
@@ -260,76 +343,6 @@ var _ = Describe("Integration", func() {
 				var list v1alpha1.ListMicroVMsResponse
 				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
 				Expect(list.Microvm).To(HaveLen(0))
-			})
-		})
-	})
-
-	Context("Clear", func() {
-		BeforeEach(func() {
-			// create ns0/mvm0
-			createCmd := command{action: "create"}
-			Eventually(executeCommand(createCmd)).Should(gexec.Exit(0))
-
-			// create ns0/Pantalaimon
-			createCmd = command{action: "create", args: []string{"--name", name}}
-			Eventually(executeCommand(createCmd)).Should(gexec.Exit(0))
-
-			// create Casper/Pantalaimon
-			createCmd = command{action: "create", args: []string{"--namespace", namespace, "--name", name}}
-			Eventually(executeCommand(createCmd)).Should(gexec.Exit(0))
-
-			var list v1alpha1.ListMicroVMsResponse
-			listCmd := command{action: "list"}
-			session := executeCommand(listCmd)
-			Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
-			Expect(list.Microvm).To(HaveLen(3))
-		})
-
-		It("deletes all existing microvms across all namespaces", func() {
-			cmd := command{action: "clear"}
-			session := executeCommand(cmd)
-			Eventually(session).Should(gexec.Exit(0))
-
-			var list v1alpha1.ListMicroVMsResponse
-			cmd = command{action: "list"}
-			session = executeCommand(cmd)
-			Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
-			// all should be gone
-			Expect(list.Microvm).To(HaveLen(0))
-		})
-
-		It("deletes all existing microvms in a specific namespace", func() {
-			cmd := command{action: "clear", args: []string{"--namespace", defaultNamespace}}
-			session := executeCommand(cmd)
-			Eventually(session).Should(gexec.Exit(0))
-
-			var list v1alpha1.ListMicroVMsResponse
-			cmd = command{action: "list"}
-			session = executeCommand(cmd)
-			Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
-			// Casper/Pantalaimon should remain
-			Expect(list.Microvm).To(HaveLen(1))
-		})
-
-		It("deletes all existing microvms in a specific namespace/name group", func() {
-			cmd := command{action: "clear", args: []string{"--namespace", defaultNamespace, "--name", defaultName}}
-			session := executeCommand(cmd)
-			Eventually(session).Should(gexec.Exit(0))
-
-			var list v1alpha1.ListMicroVMsResponse
-			cmd = command{action: "list"}
-			session = executeCommand(cmd)
-			Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
-			// Casper/Pantalaimon and ns0/Pantalaimon should remain
-			Expect(list.Microvm).To(HaveLen(2))
-		})
-
-		Context("when --name is provided but --namespace is not", func() {
-			It("prints the error", func() {
-				cmd := command{action: "clear", args: []string{"--name", defaultName}}
-				session := executeCommand(cmd)
-				Eventually(session).Should(gexec.Exit(1))
-				Eventually(session.Err).Should(gbytes.Say("required: --namespace"))
 			})
 		})
 	})
