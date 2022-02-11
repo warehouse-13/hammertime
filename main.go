@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -79,14 +80,12 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:        "public-key-path",
-						Value:       "",
 						Aliases:     []string{"k"},
 						Usage:       "path to file containing public SSH key to be added to root user",
 						Destination: &sshKeyPath,
 					},
 					&cli.StringFlag{
 						Name:        "file",
-						Value:       "",
 						Aliases:     []string{"f"},
 						Usage:       "path to json file containing full flintlock spec. will override other flags",
 						Destination: &jsonSpec,
@@ -126,7 +125,6 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:        "file",
-						Value:       "",
 						Aliases:     []string{"f"},
 						Usage:       "path to json file containing full flintlock spec. will override name and namespace flags",
 						Destination: &jsonSpec,
@@ -167,7 +165,6 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:        "namespace",
-						Value:       "",
 						Aliases:     []string{"ns"},
 						Usage:       "microvm namespace",
 						Destination: &mvmNamespace,
@@ -200,7 +197,6 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:        "file",
-						Value:       "",
 						Aliases:     []string{"f"},
 						Usage:       "path to json file containing full flintlock spec. will override other flags",
 						Destination: &jsonSpec,
@@ -229,6 +225,49 @@ func main() {
 					return prettyPrint(res)
 				},
 			},
+			{
+				Name:  "clear",
+				Usage: "delete all microvms",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "namespace",
+						Aliases:     []string{"ns"},
+						Usage:       "delete all microvms under this namespace",
+						Destination: &mvmNamespace,
+					},
+					&cli.StringFlag{
+						Name:        "name",
+						Aliases:     []string{"n"},
+						Usage:       "delete all microvms under this name in the given namespace",
+						Destination: &mvmName,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
+					if err != nil {
+						return err
+					}
+					defer conn.Close()
+
+					if isSet(mvmName) && !isSet(mvmNamespace) {
+						return errors.New("required: --namespace")
+					}
+
+					list, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
+					if err != nil {
+						return err
+					}
+
+					for _, mvm := range list.Microvm {
+						_, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), *mvm.Spec.Uid)
+						if err != nil {
+							return err
+						}
+					}
+
+					return nil
+				},
+			},
 		},
 	}
 
@@ -246,6 +285,10 @@ func prettyPrint(response interface{}) error {
 	fmt.Printf("%s\n", string(resJson))
 
 	return nil
+}
+
+func isSet(flag string) bool {
+	return flag != ""
 }
 
 func createMicrovm(client v1alpha1.MicroVMClient, name, ns, sshPath, jsonSpec string) (*v1alpha1.CreateMicroVMResponse, error) {
@@ -304,6 +347,7 @@ func deleteMicroVM(client v1alpha1.MicroVMClient, uid string) (*emptypb.Empty, e
 func listMicrovms(client v1alpha1.MicroVMClient, name, ns string) (*v1alpha1.ListMicroVMsResponse, error) {
 	listReq := v1alpha1.ListMicroVMsRequest{
 		Namespace: ns,
+		Name:      utils.PointyString(name),
 	}
 	resp, err := client.ListMicroVMs(context.Background(), &listReq)
 	if err != nil {

@@ -96,7 +96,7 @@ func (s *fakeServer) ListMicroVMs(ctx context.Context, req *mvmv1.ListMicroVMsRe
 	microvms := []*types.MicroVM{}
 
 	for _, spec := range s.savedSpecs {
-		if req.Namespace == "" || req.Namespace == spec.Namespace {
+		if shouldReturn(spec, req.Name, req.Namespace) {
 			m := &types.MicroVM{
 				Version: 0,
 				Spec:    spec,
@@ -111,6 +111,17 @@ func (s *fakeServer) ListMicroVMs(ctx context.Context, req *mvmv1.ListMicroVMsRe
 	return &mvmv1.ListMicroVMsResponse{
 		Microvm: microvms,
 	}, nil
+}
+
+func shouldReturn(spec *types.MicroVMSpec, name *string, namespace string) bool {
+	if spec.Namespace == namespace && spec.Id == *name {
+		return true
+	}
+	if spec.Namespace == namespace && *name == "" {
+		return true
+	}
+
+	return namespace == ""
 }
 
 func (s *fakeServer) ListMicroVMsStream(req *mvmv1.ListMicroVMsRequest, streamServer mvmv1.MicroVM_ListMicroVMsStreamServer) error {
