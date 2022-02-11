@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/weaveworks/flintlock/api v0.0.0-20220126104712-74e49997e1bf
-	github.com/weaveworks/flintlock/client v0.0.0-20220110105514-c0ec7b5054ee
+	github.com/weaveworks/flintlock/api v0.0.0-20220207161056-11b7da1e4969
+	github.com/weaveworks/flintlock/client v0.0.0-20220207161056-11b7da1e4969
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
