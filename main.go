@@ -38,6 +38,7 @@ func main() {
 		sshKeyPath   string
 		jsonSpec     string
 		state        bool
+		deleteAll    bool
 	)
 
 	app := &cli.App{
@@ -201,6 +202,24 @@ func main() {
 						Usage:       "path to json file containing full flintlock spec. will override other flags",
 						Destination: &jsonSpec,
 					},
+					&cli.BoolFlag{
+						Name:        "all",
+						Aliases:     []string{"a"},
+						Usage:       "delete all microvms (filter with --name and --namespace)",
+						Destination: &deleteAll,
+					},
+					&cli.StringFlag{
+						Name:        "name",
+						Aliases:     []string{"n"},
+						Usage:       "delete all microvms under this name in the given namespace",
+						Destination: &mvmName,
+					},
+					&cli.StringFlag{
+						Name:        "namespace",
+						Aliases:     []string{"ns"},
+						Usage:       "delete all microvms under this namespace",
+						Destination: &mvmNamespace,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					if jsonSpec != "" {
@@ -217,55 +236,38 @@ func main() {
 					}
 					defer conn.Close()
 
+					if (isSet(mvmName) || isSet(mvmNamespace)) && !deleteAll {
+						// TODO: this is temporary while https://github.com/Callisto13/hammertime/issues/15
+						// is waiting. I did not want to do 2 things at once here.
+						return errors.New("required: --all")
+					}
+
+					if deleteAll {
+						if isSet(mvmName) && !isSet(mvmNamespace) {
+							return errors.New("required: --namespace")
+						}
+
+						list, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
+						if err != nil {
+							return err
+						}
+
+						for _, mvm := range list.Microvm {
+							_, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), *mvm.Spec.Uid)
+							if err != nil {
+								return err
+							}
+						}
+
+						return nil
+					}
+
 					res, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), mvmUID)
 					if err != nil {
 						return err
 					}
 
 					return prettyPrint(res)
-				},
-			},
-			{
-				Name:  "clear",
-				Usage: "delete all microvms",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:        "namespace",
-						Aliases:     []string{"ns"},
-						Usage:       "delete all microvms under this namespace",
-						Destination: &mvmNamespace,
-					},
-					&cli.StringFlag{
-						Name:        "name",
-						Aliases:     []string{"n"},
-						Usage:       "delete all microvms under this name in the given namespace",
-						Destination: &mvmName,
-					},
-				},
-				Action: func(c *cli.Context) error {
-					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
-					if err != nil {
-						return err
-					}
-					defer conn.Close()
-
-					if isSet(mvmName) && !isSet(mvmNamespace) {
-						return errors.New("required: --namespace")
-					}
-
-					list, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
-					if err != nil {
-						return err
-					}
-
-					for _, mvm := range list.Microvm {
-						_, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), *mvm.Spec.Uid)
-						if err != nil {
-							return err
-						}
-					}
-
-					return nil
 				},
 			},
 		},
