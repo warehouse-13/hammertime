@@ -11,6 +11,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks/flintlock/api/types"
 )
 
 var _ = Describe("Integration", func() {
@@ -19,6 +20,7 @@ var _ = Describe("Integration", func() {
 		namespace        = "Casper"
 		defaultName      = "mvm0"
 		defaultNamespace = "ns0"
+		jsonFile         = "./../../example.json"
 	)
 
 	AfterEach(func() {
@@ -50,7 +52,7 @@ var _ = Describe("Integration", func() {
 		})
 
 		It("can create a microVM from a file", func() {
-			cmd := command{action: "create", args: []string{"--file", "./../../example.json", "--name", "this will be overriden"}}
+			cmd := command{action: "create", args: []string{"--file", jsonFile, "--name", "this will be overriden"}}
 			session := executeCommand(cmd)
 			Eventually(session).Should(gexec.Exit(0))
 
@@ -103,25 +105,134 @@ var _ = Describe("Integration", func() {
 			Expect(json.Unmarshal(session.Wait().Out.Contents(), &result)).To(Succeed())
 		})
 
-		It("gets MicroVm", func() {
-			cmd := command{action: "get", args: []string{"--id", *result.Microvm.Spec.Uid}}
-			session := executeCommand(cmd)
-			Eventually(session).Should(gexec.Exit(0))
+		Context("with no args", func() {
+			It("gets the MicroVM from the default name and namespace", func() {
+				cmd := command{action: "get"}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
 
-			var getResult v1alpha1.GetMicroVMResponse
-
-			Expect(json.Unmarshal(session.Wait().Out.Contents(), &getResult)).To(Succeed())
-			Expect(getResult.Microvm.Spec.Id).To(Equal(result.Microvm.Spec.Id))
+				var get *types.MicroVM
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &get)).To(Succeed())
+				Expect(get.Spec.Id).To(Equal(defaultName))
+				Expect(get.Spec.Namespace).To(Equal(defaultNamespace))
+			})
 		})
 
-		It("gets the state of the MicroVm", func() {
-			cmd := command{action: "get", args: []string{"--id", *result.Microvm.Spec.Uid, "--state"}}
-			session := executeCommand(cmd)
-			Eventually(session).Should(gexec.Exit(0))
-			Eventually(session.Out, "30s").Should(gbytes.Say("CREATED"))
+		Context("when more than one MicroVM in the same name and namespace group exist", func() {
+			var result2 v1alpha1.CreateMicroVMResponse
+
+			BeforeEach(func() {
+				createCmd := command{action: "create"}
+				session := executeCommand(createCmd)
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &result2)).To(Succeed())
+			})
+
+			It("returns the uuids of those MicroVMs", func() {
+				cmd := command{action: "get"}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+				Eventually(session.Out).Should(gbytes.Say("2 MicroVMs found under ns0/mvm0"))
+				Eventually(session.Out).Should(gbytes.Say(*result.Microvm.Spec.Uid))
+				Eventually(session.Out).Should(gbytes.Say(*result2.Microvm.Spec.Uid))
+			})
 		})
 
-		Context("when passing a json file", func() {
+		Context("when passing id as argument", func() {
+			It("gets MicroVm using --id", func() {
+				cmd := command{action: "get", args: []string{"--id", *result.Microvm.Spec.Uid}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var getResult v1alpha1.GetMicroVMResponse
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &getResult)).To(Succeed())
+				Expect(getResult.Microvm.Spec.Id).To(Equal(result.Microvm.Spec.Id))
+			})
+
+			Context("when passing state as argument", func() {
+				It("gets the state of the MicroVm using --state", func() {
+					cmd := command{action: "get", args: []string{"--id", *result.Microvm.Spec.Uid, "--state"}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(0))
+					Eventually(session.Out).Should(gbytes.Say("CREATED"))
+				})
+			})
+		})
+
+		Context("when passing name as argument", func() {
+			BeforeEach(func() {
+				createCmd := command{action: "create", args: []string{"--name", name}}
+				session := executeCommand(createCmd)
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("gets MicroVm using --name from default namespace", func() {
+				cmd := command{action: "get", args: []string{"--name", name}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var get *types.MicroVM
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &get)).To(Succeed())
+				Expect(get.Spec.Id).To(Equal(name))
+				Expect(get.Spec.Namespace).To(Equal(defaultNamespace))
+			})
+		})
+
+		Context("when passing namespace argument", func() {
+			BeforeEach(func() {
+				createCmd := command{action: "create", args: []string{"--namespace", namespace}}
+				session := executeCommand(createCmd)
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("gets default named MicroVm from --namespace", func() {
+				cmd := command{action: "get", args: []string{"--namespace", namespace}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var get *types.MicroVM
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &get)).To(Succeed())
+				Expect(get.Spec.Namespace).To(Equal(namespace))
+				Expect(get.Spec.Id).To(Equal(defaultName))
+			})
+		})
+
+		Context("when passing name and namespace as arguments", func() {
+			BeforeEach(func() {
+				createCmd := command{action: "create", args: []string{"--namespace", namespace, "--name", name}}
+				session := executeCommand(createCmd)
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("gets MicroVM using --namespace and --name", func() {
+				cmd := command{action: "get", args: []string{"--namespace", namespace, "--name", name}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				var get *types.MicroVM
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &get)).To(Succeed())
+				Expect(get.Spec.Namespace).To(Equal(namespace))
+				Expect(get.Spec.Id).To(Equal(name))
+			})
+		})
+
+		Context("when passing name and/or namespace and state as arguments", func() {
+			BeforeEach(func() {
+				createCmd := command{action: "create", args: []string{"--namespace", namespace, "--name", name}}
+				session := executeCommand(createCmd)
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
+			It("returns the state of the microVM", func() {
+				cmd := command{action: "get", args: []string{"--namespace", namespace, "--name", name, "--state"}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+
+				Eventually(session.Out).Should(gbytes.Say("CREATED"))
+			})
+		})
+
+		Context("when passing a json file as argument", func() {
 			var getFile *os.File
 
 			BeforeEach(func() {
@@ -139,15 +250,72 @@ var _ = Describe("Integration", func() {
 				Expect(os.Remove(getFile.Name())).To(Succeed())
 			})
 
-			It("gets MicroVm", func() {
-				cmd := command{action: "get", args: []string{"--id", "this will be overriden", "--file", getFile.Name()}}
+			It("gets MicroVm using --file containing UUID", func() {
+				cmd := command{action: "get", args: []string{"--id", "this will be ignored", "--file", getFile.Name()}}
 				session := executeCommand(cmd)
 				Eventually(session).Should(gexec.Exit(0))
 
-				var getResult v1alpha1.GetMicroVMResponse
+				var get v1alpha1.GetMicroVMResponse
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &get)).To(Succeed())
+				Expect(get.Microvm.Spec.Id).To(Equal(result.Microvm.Spec.Id))
+			})
 
-				Expect(json.Unmarshal(session.Wait().Out.Contents(), &getResult)).To(Succeed())
-				Expect(getResult.Microvm.Spec.Id).To(Equal(defaultName))
+			Context("when uuid is not present in the file", func() {
+				BeforeEach(func() {
+					cmd := command{action: "create", args: []string{"--file", jsonFile, "--name", "this will be overriden"}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(0))
+				})
+
+				It("gets MicroVm from the file name/namespace", func() {
+					cmd := command{action: "get", args: []string{"--id", "this will be ignored", "--file", jsonFile}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(0))
+
+					var get *types.MicroVM
+					Expect(json.Unmarshal(session.Wait().Out.Contents(), &get)).To(Succeed())
+					Expect(get.Spec.Id).To(Equal("mvm1"))
+					Expect(get.Spec.Namespace).To(Equal("ns1"))
+				})
+			})
+
+			Context("when name/namespace and uuid are not present", func() {
+				var file *os.File
+
+				BeforeEach(func() {
+					cmd := command{action: "create", args: []string{"--file", jsonFile}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(0))
+
+					dat, err := ioutil.ReadFile(jsonFile)
+					Expect(err).NotTo(HaveOccurred())
+
+					var m *types.MicroVMSpec
+					Expect(json.Unmarshal([]byte(dat), &m)).To(Succeed())
+
+					m.Id = ""
+					m.Namespace = ""
+
+					file, err = ioutil.TempFile("", "tempfile")
+					Expect(err).NotTo(HaveOccurred())
+
+					var data []byte
+					data, err = json.Marshal(m)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(ioutil.WriteFile(file.Name(), data, 0)).To(Succeed())
+				})
+
+				AfterEach(func() {
+					Expect(os.Remove(file.Name())).To(Succeed())
+				})
+
+				It("prints the error", func() {
+					cmd := command{action: "get", args: []string{"--file", file.Name()}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(1))
+					Eventually(session.Err).Should(gbytes.Say("required: uuid or name/namespace"))
+				})
 			})
 		})
 	})

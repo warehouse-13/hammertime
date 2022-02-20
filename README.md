@@ -43,11 +43,14 @@ as JSON so you can pipe to `jq` or whatever as you like.
 # create 'mvm0' in 'ns0' (take note of the UID after creation)
 hammertime create
 
-# get
-hammertime get -i <UUID>
+# get 'mvm0' in 'ns0' 
+hammertime get
 
 # get just the state of 'mvm0' in 'ns0' *see below
-hammertime get -i <UUID> -s
+hammertime get -s
+
+# get
+hammertime get -i <UUID>
 
 # get all mvms across all namespaces
 hammertime list

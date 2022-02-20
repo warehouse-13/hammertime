@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/Callisto13/hammertime/pkg/utils"
 	"github.com/urfave/cli/v2"
@@ -130,31 +131,90 @@ func main() {
 						Usage:       "path to json file containing full flintlock spec. will override name and namespace flags",
 						Destination: &jsonSpec,
 					},
+					&cli.StringFlag{
+						Name:        "name",
+						Value:       defaultMvmName,
+						Aliases:     []string{"n"},
+						Usage:       "microvm name",
+						Destination: &mvmName,
+					},
+					&cli.StringFlag{
+						Name:        "namespace",
+						Value:       defaultMvmNamespace,
+						Aliases:     []string{"ns"},
+						Usage:       "microvm namespace",
+						Destination: &mvmNamespace,
+					},
 				},
 				Action: func(c *cli.Context) error {
-					if jsonSpec != "" {
-						spec, err := loadSpecFromFile(jsonSpec)
-						if err != nil {
-							return err
-						}
-						mvmUID = *spec.Uid
-					}
-
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
 					if err != nil {
 						return err
 					}
 					defer conn.Close()
 
-					res, err := getMicrovm(v1alpha1.NewMicroVMClient(conn), mvmUID)
+					if isSet(jsonSpec) {
+						mvmName = ""
+						mvmNamespace = ""
+						mvmUID = ""
+
+						spec, err := loadSpecFromFile(jsonSpec)
+						if err != nil {
+							return err
+						}
+
+						if spec.Uid == nil && (!isSet(spec.Id) && !isSet(spec.Namespace)) {
+							return errors.New("required: uuid or name/namespace")
+						}
+
+						if spec.Uid != nil {
+							mvmUID = *spec.Uid
+						}
+
+						if isSet(spec.Id) && isSet(spec.Namespace) {
+							mvmName = spec.Id
+							mvmNamespace = spec.Namespace
+						}
+					}
+
+					if isSet(mvmUID) {
+						res, err := getMicrovm(v1alpha1.NewMicroVMClient(conn), mvmUID)
+						if err != nil {
+							return err
+						}
+
+						if state {
+							fmt.Println(res.Microvm.Status.State)
+
+							return nil
+						}
+
+						return prettyPrint(res)
+					}
+
+					res, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
 					if err != nil {
 						return err
 					}
 
-					if state {
-						fmt.Println(res.Microvm.Status.State)
+					if len(res.Microvm) > 1 {
+						var uuids []string
+						for _, microvm := range res.Microvm {
+							uuids = append(uuids, *microvm.Spec.Uid)
+						}
+						fmt.Printf("%d MicroVMs found under %s/%s:\n%s", len(res.Microvm), mvmNamespace, mvmName, strings.Join(uuids, "\n"))
 
 						return nil
+					}
+
+					if len(res.Microvm) == 1 {
+						if state {
+							fmt.Println(res.Microvm[0].Status.State)
+
+							return nil
+						}
+
+						return prettyPrint(res.Microvm[0])
 					}
 
 					return prettyPrint(res)
