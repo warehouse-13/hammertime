@@ -3,17 +3,17 @@ module github.com/Callisto13/hammertime
 go 1.17
 
 require (
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/weaveworks/flintlock/api v0.0.0-20220207161056-11b7da1e4969
-	github.com/weaveworks/flintlock/client v0.0.0-20220207161056-11b7da1e4969
-	google.golang.org/grpc v1.42.0
+	github.com/weaveworks/flintlock/api v0.0.0-20220221122144-16d503992d5a
+	github.com/weaveworks/flintlock/client v0.0.0-20220221122144-16d503992d5a
+	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
