@@ -17,7 +17,8 @@ import (
 
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
-	"github.com/weaveworks/flintlock/client/cloudinit"
+	"github.com/weaveworks/flintlock/client/cloudinit/instance"
+	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -466,7 +467,7 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 }
 
 func createUserData(name, sshPath string) (string, error) {
-	defaultUser := cloudinit.User{
+	defaultUser := userdata.User{
 		Name: "root",
 	}
 
@@ -481,9 +482,9 @@ func createUserData(name, sshPath string) (string, error) {
 	}
 
 	// TODO: remove the boot command temporary fix after image-builder #6
-	userData := &cloudinit.UserData{
+	userData := &userdata.UserData{
 		HostName: name,
-		Users: []cloudinit.User{
+		Users: []userdata.User{
 			defaultUser,
 		},
 		FinalMessage: "The Liquid Metal booted system is good to go after $UPTIME seconds",
@@ -503,13 +504,13 @@ func createUserData(name, sshPath string) (string, error) {
 }
 
 func createMetadata(name, ns string) (string, error) {
-	userMetadata := cloudinit.Metadata{
-		InstanceID:    fmt.Sprintf("%s/%s", ns, name),
-		LocalHostname: name,
-		Platform:      "liquid_metal",
-	}
+	metadata := instance.New(
+		instance.WithInstanceID(fmt.Sprintf("%s/%s", ns, name)),
+		instance.WithLocalHostname(name),
+		instance.WithPlatform("liquid_metal"),
+	)
 
-	userMeta, err := yaml.Marshal(userMetadata)
+	userMeta, err := yaml.Marshal(metadata)
 	if err != nil {
 		return "", fmt.Errorf("unable to marshal metadata: %w", err)
 	}

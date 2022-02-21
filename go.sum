@@ -178,10 +178,10 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/urfave/cli/v2 v2.3.0 h1:qph92Y649prgesehzOrQjdWyxFOp/QVM+6imKHad91M=
 github.com/urfave/cli/v2 v2.3.0/go.mod h1:LJmUH05zAU44vOAcrfzZQKsZbVcdbOG8rtL3/XcUArI=
-github.com/weaveworks/flintlock/api v0.0.0-20220207161056-11b7da1e4969 h1:KaPGquph5amu+FyTnPYHgIIMPmxh955/zuddcOcyuiY=
-github.com/weaveworks/flintlock/api v0.0.0-20220207161056-11b7da1e4969/go.mod h1:RFgQ7RSa7zGNxxR+dS6NRDCQ/IAN23WCfXg4+L6fclI=
-github.com/weaveworks/flintlock/client v0.0.0-20220207161056-11b7da1e4969 h1:j5jPIUaDGpSQw2z1Qh/EcL8Jmw6WvJqac2ln3MvFKSk=
-github.com/weaveworks/flintlock/client v0.0.0-20220207161056-11b7da1e4969/go.mod h1:1jiepUOR2kxAdoxXXyNQ0LnOeT2gOUSnWGuXh9akjDw=
+github.com/weaveworks/flintlock/api v0.0.0-20220221122144-16d503992d5a h1:E68krYEWIVNI5K4kL5mcmasoUzBJI2Cos74oFBpkd20=
+github.com/weaveworks/flintlock/api v0.0.0-20220221122144-16d503992d5a/go.mod h1:RFgQ7RSa7zGNxxR+dS6NRDCQ/IAN23WCfXg4+L6fclI=
+github.com/weaveworks/flintlock/client v0.0.0-20220221122144-16d503992d5a h1:nhUyuUaLut5aRqsP2o3V4qqGuq3HzbfIuxRt1Vokaeg=
+github.com/weaveworks/flintlock/client v0.0.0-20220221122144-16d503992d5a/go.mod h1:4G/IetnXREmEo1agCWLwYScjw4+ElzKcDLjJ4seZJ6k=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
@@ -448,8 +448,8 @@ google.golang.org/grpc v1.33.1/go.mod h1:fr5YgcSWrqhRRxogOsw7RzIpsmvOZ6IcH4kBYTp
 google.golang.org/grpc v1.36.0/go.mod h1:qjiiYl8FncCW8feJPdyg3v6XW24KsRHe+dy9BAGRRjU=
 google.golang.org/grpc v1.40.0/go.mod h1:ogyxbiOoUXAkP+4+xa6PZSE9DZgIHtSpzjDTB9KAK34=
 google.golang.org/grpc v1.41.0/go.mod h1:U3l9uK9J0sini8mHphKoXyaqDA/8VyGnDee1zzIUK6k=
-google.golang.org/grpc v1.42.0 h1:XT2/MFpuPFsEX2fWh3YQtHkZ+WYZFQRfaUgLZYj/p6A=
-google.golang.org/grpc v1.42.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ590SU=
+google.golang.org/grpc v1.44.0 h1:weqSxi/TMs1SqFRMHCtBgXRs8k3X39QIDEZ0pRcttUg=
+google.golang.org/grpc v1.44.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ590SU=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
