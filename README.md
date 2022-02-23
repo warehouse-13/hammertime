@@ -55,6 +55,9 @@ hammertime get -i <UUID>
 # get all mvms across all namespaces
 hammertime list
 
+# delete 'mvm0' from 'ns0'
+hammertime delete
+
 # delete
 hammertime delete -i <UID>
 

@@ -3,6 +3,7 @@ package integration_test
 import (
 	b64 "encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -280,38 +281,26 @@ var _ = Describe("Integration", func() {
 			})
 
 			Context("when name/namespace and uuid are not present", func() {
-				var file *os.File
-
 				BeforeEach(func() {
-					cmd := command{action: "create", args: []string{"--file", jsonFile}}
-					session := executeCommand(cmd)
-					Eventually(session).Should(gexec.Exit(0))
-
-					dat, err := ioutil.ReadFile(jsonFile)
+					dat, err := ioutil.ReadFile(getFile.Name())
 					Expect(err).NotTo(HaveOccurred())
 
 					var m *types.MicroVMSpec
 					Expect(json.Unmarshal([]byte(dat), &m)).To(Succeed())
 
+					m.Uid = nil
 					m.Id = ""
 					m.Namespace = ""
-
-					file, err = ioutil.TempFile("", "tempfile")
-					Expect(err).NotTo(HaveOccurred())
 
 					var data []byte
 					data, err = json.Marshal(m)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(ioutil.WriteFile(file.Name(), data, 0)).To(Succeed())
-				})
-
-				AfterEach(func() {
-					Expect(os.Remove(file.Name())).To(Succeed())
+					Expect(ioutil.WriteFile(getFile.Name(), data, 0)).To(Succeed())
 				})
 
 				It("prints the error", func() {
-					cmd := command{action: "get", args: []string{"--file", file.Name()}}
+					cmd := command{action: "get", args: []string{"--file", getFile.Name()}}
 					session := executeCommand(cmd)
 					Eventually(session).Should(gexec.Exit(1))
 					Eventually(session.Err).Should(gbytes.Say("required: uuid or name/namespace"))
@@ -321,16 +310,25 @@ var _ = Describe("Integration", func() {
 	})
 
 	Context("Delete", func() {
-		var result v1alpha1.CreateMicroVMResponse
+		var (
+			result  v1alpha1.CreateMicroVMResponse
+			result2 v1alpha1.CreateMicroVMResponse
+			name    = "DELETEME"
+		)
 
 		BeforeEach(func() {
-			createCmd := command{action: "create", args: []string{"--name", "DELETEME"}}
+			createCmd := command{action: "create", args: []string{"--name", name}}
 			session := executeCommand(createCmd)
 			Eventually(session).Should(gexec.Exit(0))
 			Expect(json.Unmarshal(session.Wait().Out.Contents(), &result)).To(Succeed())
+
+			createCmd = command{action: "create", args: []string{"--name", "leave-me-here"}}
+			session = executeCommand(createCmd)
+			Eventually(session).Should(gexec.Exit(0))
+			Expect(json.Unmarshal(session.Wait().Out.Contents(), &result2)).To(Succeed())
 		})
 
-		It("deletes MicroVm", func() {
+		It("deletes MicroVm by --id", func() {
 			cmd := command{action: "delete", args: []string{"--id", *result.Microvm.Spec.Uid}}
 			Eventually(executeCommand(cmd)).Should(gexec.Exit(0))
 
@@ -338,6 +336,58 @@ var _ = Describe("Integration", func() {
 			getSession := executeCommand(getCmd)
 			Eventually(getSession).Should(gexec.Exit(1))
 			Eventually(getSession.Err).Should(gbytes.Say("OHH WHAT A DISASTER"))
+
+			getCmd = command{action: "get", args: []string{"--id", *result2.Microvm.Spec.Uid}}
+			getSession = executeCommand(getCmd)
+			Eventually(getSession).Should(gexec.Exit(0))
+		})
+
+		It("deletes MicroVm by --name and --namespace", func() {
+			cmd := command{action: "delete", args: []string{"--name", name, "--namespace", defaultNamespace}}
+			Eventually(executeCommand(cmd)).Should(gexec.Exit(0))
+
+			getCmd := command{action: "get", args: []string{"--id", *result.Microvm.Spec.Uid}}
+			getSession := executeCommand(getCmd)
+			Eventually(getSession).Should(gexec.Exit(1))
+			Eventually(getSession.Err).Should(gbytes.Say("OHH WHAT A DISASTER"))
+
+			getCmd = command{action: "get", args: []string{"--id", *result2.Microvm.Spec.Uid}}
+			getSession = executeCommand(getCmd)
+			Eventually(getSession).Should(gexec.Exit(0))
+		})
+
+		Context("when more than one Microvm is found in a namespace/name group", func() {
+			BeforeEach(func() {
+				createCmd := command{action: "create", args: []string{"--name", name}}
+				session := executeCommand(createCmd)
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(json.Unmarshal(session.Wait().Out.Contents(), &result)).To(Succeed())
+			})
+
+			It("returns an list of the found uids", func() {
+				cmd := command{action: "delete", args: []string{"--name", name, "--namespace", defaultNamespace}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(0))
+				Eventually(session.Out).Should(gbytes.Say("2 MicroVMs found under ns0/DELETEME:"))
+			})
+		})
+
+		Context("when name is given but namespace is not", func() {
+			It("returns an error", func() {
+				cmd := command{action: "delete", args: []string{"--name", name}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(1))
+				Eventually(session.Err).Should(gbytes.Say("required: --namespace"))
+			})
+		})
+
+		Context("when namespace is given but name is not", func() {
+			It("returns an error", func() {
+				cmd := command{action: "delete", args: []string{"--namespace", defaultNamespace}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(1))
+				Eventually(session.Err).Should(gbytes.Say("required: --name"))
+			})
 		})
 
 		Context("when passing a json file", func() {
@@ -350,15 +400,14 @@ var _ = Describe("Integration", func() {
 				deleteFile, err = ioutil.TempFile("", "tempfile")
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(deleteFile.Name(), []byte(content), 0)
-				Expect(err).NotTo(HaveOccurred())
+				Expect(ioutil.WriteFile(deleteFile.Name(), []byte(content), 0)).To(Succeed())
 			})
 
 			AfterEach(func() {
 				Expect(os.Remove(deleteFile.Name())).To(Succeed())
 			})
 
-			It("deletes MicroVm", func() {
+			It("deletes MicroVm by UUID", func() {
 				cmd := command{action: "delete", args: []string{"--id", "this will be overriden", "--file", deleteFile.Name()}}
 				Eventually(executeCommand(cmd)).Should(gexec.Exit(0))
 
@@ -366,6 +415,65 @@ var _ = Describe("Integration", func() {
 				getSession := executeCommand(getCmd)
 				Eventually(getSession).Should(gexec.Exit(1))
 				Eventually(getSession.Err).Should(gbytes.Say("OHH WHAT A DISASTER"))
+
+				getCmd = command{action: "get", args: []string{"--id", *result2.Microvm.Spec.Uid}}
+				getSession = executeCommand(getCmd)
+				Eventually(getSession).Should(gexec.Exit(0))
+			})
+
+			Context("when uuid is not present in the file", func() {
+				var name, namespace string
+
+				BeforeEach(func() {
+					dat, err := ioutil.ReadFile(deleteFile.Name())
+					Expect(err).NotTo(HaveOccurred())
+
+					var m *types.MicroVMSpec
+					Expect(json.Unmarshal([]byte(dat), &m)).To(Succeed())
+					m.Uid = nil
+					name = m.Id
+					namespace = m.Namespace
+
+					var data []byte
+					data, err = json.Marshal(m)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ioutil.WriteFile(deleteFile.Name(), data, 0)).To(Succeed())
+				})
+
+				It("deletes MicroVm by the name/namespace in the file", func() {
+					cmd := command{action: "delete", args: []string{"--id", "this will be ignored", "--file", deleteFile.Name()}}
+					Eventually(executeCommand(cmd)).Should(gexec.Exit(0))
+
+					getCmd := command{action: "get", args: []string{"--file", deleteFile.Name()}}
+					getSession := executeCommand(getCmd)
+					Eventually(getSession).Should(gexec.Exit(1))
+					Eventually(getSession.Err).Should(gbytes.Say(fmt.Sprintf("MicroVM %s/%s not found", namespace, name)))
+				})
+			})
+
+			Context("when name/namespace and uuid are not present", func() {
+				BeforeEach(func() {
+					dat, err := ioutil.ReadFile(deleteFile.Name())
+					Expect(err).NotTo(HaveOccurred())
+
+					var m *types.MicroVMSpec
+					Expect(json.Unmarshal([]byte(dat), &m)).To(Succeed())
+					m.Uid = nil
+					m.Id = ""
+					m.Namespace = ""
+
+					var data []byte
+					data, err = json.Marshal(m)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ioutil.WriteFile(deleteFile.Name(), data, 0)).To(Succeed())
+				})
+
+				It("prints the error", func() {
+					cmd := command{action: "delete", args: []string{"--file", deleteFile.Name()}}
+					session := executeCommand(cmd)
+					Eventually(session).Should(gexec.Exit(1))
+					Eventually(session.Err).Should(gbytes.Say("required: uuid or name/namespace"))
+				})
 			})
 		})
 
@@ -387,7 +495,7 @@ var _ = Describe("Integration", func() {
 				listCmd := command{action: "list"}
 				session := executeCommand(listCmd)
 				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
-				Expect(list.Microvm).To(HaveLen(4))
+				Expect(list.Microvm).To(HaveLen(5))
 			})
 
 			It("deletes all existing microvms across all namespaces", func() {
@@ -425,8 +533,8 @@ var _ = Describe("Integration", func() {
 				cmd = command{action: "list"}
 				session = executeCommand(cmd)
 				Expect(json.Unmarshal(session.Wait().Out.Contents(), &list)).To(Succeed())
-				// Casper/Pantalaimon, ns0/Pantalaimon and ns0/DELETEME should remain
-				Expect(list.Microvm).To(HaveLen(3))
+				// Casper/Pantalaimon, ns0/Pantalaimon, ns0/leave-me-here and ns0/DELETEME should remain
+				Expect(list.Microvm).To(HaveLen(4))
 			})
 
 			Context("when --name is provided but --namespace is not", func() {
@@ -435,20 +543,6 @@ var _ = Describe("Integration", func() {
 					session := executeCommand(cmd)
 					Eventually(session).Should(gexec.Exit(1))
 					Eventually(session.Err).Should(gbytes.Say("required: --namespace"))
-				})
-			})
-
-			Context("when --name and/or --namespace is provided but --all is not", func() {
-				It("prints the error", func() {
-					cmd := command{action: "delete", args: []string{"--name", defaultName}}
-					session := executeCommand(cmd)
-					Eventually(session).Should(gexec.Exit(1))
-					Eventually(session.Err).Should(gbytes.Say("required: --all"))
-
-					cmd = command{action: "delete", args: []string{"--namespace", defaultNamespace}}
-					session = executeCommand(cmd)
-					Eventually(session).Should(gexec.Exit(1))
-					Eventually(session.Err).Should(gbytes.Say("required: --all"))
 				})
 			})
 		})

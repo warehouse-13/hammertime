@@ -155,26 +155,10 @@ func main() {
 					defer conn.Close()
 
 					if isSet(jsonSpec) {
-						mvmName = ""
-						mvmNamespace = ""
-						mvmUID = ""
-
-						spec, err := loadSpecFromFile(jsonSpec)
+						var err error
+						mvmUID, mvmName, mvmNamespace, err = processFile(jsonSpec)
 						if err != nil {
 							return err
-						}
-
-						if spec.Uid == nil && (!isSet(spec.Id) && !isSet(spec.Namespace)) {
-							return errors.New("required: uuid or name/namespace")
-						}
-
-						if spec.Uid != nil {
-							mvmUID = *spec.Uid
-						}
-
-						if isSet(spec.Id) && isSet(spec.Namespace) {
-							mvmName = spec.Id
-							mvmNamespace = spec.Namespace
 						}
 					}
 
@@ -218,7 +202,7 @@ func main() {
 						return prettyPrint(res.Microvm[0])
 					}
 
-					return prettyPrint(res)
+					return fmt.Errorf("MicroVM %s/%s not found", mvmNamespace, mvmName)
 				},
 			},
 			{
@@ -283,52 +267,68 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					if jsonSpec != "" {
-						spec, err := loadSpecFromFile(jsonSpec)
-						if err != nil {
-							return err
-						}
-						mvmUID = *spec.Uid
-					}
-
 					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
 					if err != nil {
 						return err
 					}
 					defer conn.Close()
 
-					if (isSet(mvmName) || isSet(mvmNamespace)) && !deleteAll {
-						// TODO: this is temporary while https://github.com/Callisto13/hammertime/issues/15
-						// is waiting. I did not want to do 2 things at once here.
-						return errors.New("required: --all")
+					if isSet(jsonSpec) {
+						var err error
+						mvmUID, mvmName, mvmNamespace, err = processFile(jsonSpec)
+						if err != nil {
+							return err
+						}
+					}
+
+					if isSet(mvmUID) {
+						res, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), mvmUID)
+						if err != nil {
+							return err
+						}
+
+						return prettyPrint(res)
 					}
 
 					if deleteAll {
 						if isSet(mvmName) && !isSet(mvmNamespace) {
 							return errors.New("required: --namespace")
 						}
-
-						list, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
-						if err != nil {
-							return err
+					} else {
+						if isSet(mvmName) && !isSet(mvmNamespace) {
+							return errors.New("required: --namespace")
 						}
-
-						for _, mvm := range list.Microvm {
-							_, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), *mvm.Spec.Uid)
-							if err != nil {
-								return err
-							}
+						if !isSet(mvmName) && isSet(mvmNamespace) {
+							return errors.New("required: --name")
 						}
-
-						return nil
 					}
 
-					res, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), mvmUID)
+					list, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
 					if err != nil {
 						return err
 					}
 
-					return prettyPrint(res)
+					if isSet(mvmName) && isSet(mvmNamespace) && !deleteAll {
+						if len(list.Microvm) > 1 {
+							fmt.Printf("%d MicroVMs found under %s/%s:\n", len(list.Microvm), mvmNamespace, mvmName)
+							for _, mvm := range list.Microvm {
+								fmt.Println(*mvm.Spec.Uid)
+							}
+							return nil
+						}
+					}
+
+					for _, mvm := range list.Microvm {
+						res, err := deleteMicroVM(v1alpha1.NewMicroVMClient(conn), *mvm.Spec.Uid)
+						if err != nil {
+							return err
+						}
+						if err := prettyPrint(res); err != nil {
+							return err
+						}
+					}
+
+					return nil
 				},
 			},
 		},
@@ -525,6 +525,28 @@ func getKeyFromPath(path string) (string, error) {
 	}
 
 	return string(key), nil
+}
+
+func processFile(file string) (string, string, string, error) {
+	var uid, name, namespace string
+
+	spec, err := loadSpecFromFile(file)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	if spec.Uid == nil && (!isSet(spec.Id) && !isSet(spec.Namespace)) {
+		return "", "", "", errors.New("required: uuid or name/namespace")
+	}
+
+	if spec.Uid != nil {
+		uid = *spec.Uid
+	}
+
+	name = spec.Id
+	namespace = spec.Namespace
+
+	return uid, name, namespace, nil
 }
 
 func loadSpecFromFile(file string) (*types.MicroVMSpec, error) {
