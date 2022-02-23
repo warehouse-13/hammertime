@@ -119,6 +119,15 @@ var _ = Describe("Integration", func() {
 			})
 		})
 
+		Context("when no MVM with namespace/name group exists", func() {
+			It("returns the error", func() {
+				cmd := command{action: "get", args: []string{"--name", "foo", "--namespace", "bar"}}
+				session := executeCommand(cmd)
+				Eventually(session).Should(gexec.Exit(1))
+				Eventually(session.Err).Should(gbytes.Say(fmt.Sprintf("MicroVM bar/foo not found")))
+			})
+		})
+
 		Context("when more than one MicroVM in the same name and namespace group exist", func() {
 			var result2 v1alpha1.CreateMicroVMResponse
 
