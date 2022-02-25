@@ -5,18 +5,45 @@ A very basic CLI tool for interacting with [flintlock](https://github.com/weavew
 (Those of you who know your archaic gun mechanisms will understand the name and no doubt
 find it hilarious.) (You are welcome.)
 
-Why did I make this? Well we used to use another generic GRPC client, but we discovered
-that, for reasons I do not yet know, it [didn't like some of the enum values we returned](https://github.com/weaveworks/flintlock/issues/313#issuecomment-991015159).
-So here we are.
-
+This started off as a toy I made quickly to test live flintlock servers.
 I have kept it around because it makes working with flintlock very straightforward.
+
+It is currently being heavily refactored.
+
+
+<!--
+To update the TOC, install https://github.com/kubernetes-sigs/mdtoc
+and run: mdtoc -inplace README.md
+-->
+
+<!-- toc -->
+- [Flintlock?](#flintlock)
+- [Versioning](#versioning)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Development](#development)
+  - [Testing](#testing)
+<!-- /toc -->
+
+
+### Flintlock?
+
+[Flintlock](https://github.com/weaveworks/flintlock) is a service to manage MicroVMs
+on bare-metal.
+
+MicroVMs are, as they sound, smaller VMs. Unlike regular VMs, which generally must
+be prepared to run any kernel, OS, environment with any number of features that a user
+may end up needing, MicroVMs are stripped down for a purpose. They provide a smaller
+subset of virtualisation tailored for a specific task (in the case of Flintlock, this is to
+run [Kubernetes](https://kubernetes.io/) nodes). This means they are smaller and "lighter"
+to run. In a best of both worlds thing: they provide the speed and lower resource allocation
+of container, and the security of full VMs.
 
 ### Versioning
 
-Latest of hammertime is always aligned with latest of flintlock.
-Check the release notes for potential breakages.
-
-TODO compatibility table
+Check the release notes for each release to find Flintlock compatibility.
+Both Flintlock and this tool are in alpha development, thus the API is likely
+to change often until v1.
 
 ### Installation
 
@@ -27,10 +54,9 @@ TODO compatibility table
    make build
    ```
 
-2. Get a [released binary](https://github.com/Callisto13/hammertime/releases) (linux only)
+2. Get a [released binary](https://github.com/Callisto13/hammertime/releases)
 
 3. Install with go: `go install github.com/Callisto13/hammertime/releases@latest`
-
 
 Alias to `ht` if you like.
 
@@ -40,13 +66,16 @@ Alias to `ht` if you like.
 as JSON so you can pipe to `jq` or whatever as you like.
 
 ```bash
+# see all options
+hammertime --help
+
 # create 'mvm0' in 'ns0' (take note of the UID after creation)
 hammertime create
 
-# get 'mvm0' in 'ns0' 
+# get 'mvm0' in 'ns0'
 hammertime get
 
-# get just the state of 'mvm0' in 'ns0' *see below
+# get just the state of 'mvm0' in 'ns0' see below
 hammertime get -s
 
 # get
@@ -67,24 +96,12 @@ There is the option to create with an SSH key.
 You can also pass a full json configfile to `create`, `get` and `delete` if you want to override
 everything (see [example.json](example.json)).
 
-Run `hammertime --help` for details.
-
-\* Why have a specific flag for getting the state? Why not just let users do whatever
-with `jq` or equivalent? Well, when the state is `PENDING` it is enum value `0`
-in our proto, which ends up equating to a `null` value and so that is what ends
-up being populated (or doesn't really, but get it).
-When you call it explicitly on the received object, the client will understand
-that it is not actually `null` and translate the `0` properly.
-Furthermore, even when
-the value is set to some non-zero state, then all that will be in the printed result
-is the enum number, which is not very user friendly. So this is why we have the
-flag. I could totally do a conversion
-func which would solve both these issues, but I cnba right now.
-
+Run `hammertime --help` for all options.
 
 ### Development
 
 #### Testing
 
 Test can be run with `make test`.
+
 For a list of all make commands, run `make help`.
