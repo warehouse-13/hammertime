@@ -1,3 +1,6 @@
+BIN_DIR := bin
+HT_CMD := .
+
 .PHONY: build
 build: ## Build hammertime
 	go build -o hammertime main.go
@@ -6,8 +9,14 @@ build: ## Build hammertime
 test: ## Run tests
 	ginkgo -r test
 
-.PHONY: docs
-docs: ## Update the readme help docs
+.PHONY: release
+release: ## Cross compile bins for linux, windows, mac
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-linux-amd64 $(HT_CMD)
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-linux-arm64 $(HT_CMD)
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-windows-amd64 $(HT_CMD)
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-windows-arm64 $(HT_CMD)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-darwin-amd64 $(HT_CMD)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-darwin-arm64 $(HT_CMD)
 
 .PHONY: help
 help:  ## Display this help. Thanks to https://www.thapaliya.com/en/writings/well-documented-makefiles/
