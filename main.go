@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,10 +12,10 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/utils"
-
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -27,7 +26,7 @@ const (
 	defaultMvmNamespace = "ns0"
 )
 
-func main() {
+func main() { //nolint // we are refactoring this file
 	var (
 		dialTarget   string
 		port         string
@@ -92,7 +91,11 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
+					conn, err := grpc.Dial(
+						fmt.Sprintf("%s:%s", dialTarget, port),
+						grpc.WithTransportCredentials(insecure.NewCredentials()),
+						grpc.WithBlock(),
+					)
 					if err != nil {
 						return err
 					}
@@ -147,7 +150,11 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
+					conn, err := grpc.Dial(
+						fmt.Sprintf("%s:%s", dialTarget, port),
+						grpc.WithTransportCredentials(insecure.NewCredentials()),
+						grpc.WithBlock(),
+					)
 					if err != nil {
 						return err
 					}
@@ -186,7 +193,11 @@ func main() {
 						for _, microvm := range res.Microvm {
 							uuids = append(uuids, *microvm.Spec.Uid)
 						}
-						fmt.Printf("%d MicroVMs found under %s/%s:\n%s", len(res.Microvm), mvmNamespace, mvmName, strings.Join(uuids, "\n"))
+						fmt.Printf("%d MicroVMs found under %s/%s:\n%s",
+							len(res.Microvm),
+							mvmNamespace,
+							mvmName,
+							strings.Join(uuids, "\n"))
 
 						return nil
 					}
@@ -216,7 +227,11 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
+					conn, err := grpc.Dial(
+						fmt.Sprintf("%s:%s", dialTarget, port),
+						grpc.WithTransportCredentials(insecure.NewCredentials()),
+						grpc.WithBlock(),
+					)
 					if err != nil {
 						return err
 					}
@@ -266,7 +281,11 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					conn, err := grpc.Dial(fmt.Sprintf("%s:%s", dialTarget, port), grpc.WithInsecure(), grpc.WithBlock())
+					conn, err := grpc.Dial(
+						fmt.Sprintf("%s:%s", dialTarget, port),
+						grpc.WithTransportCredentials(insecure.NewCredentials()),
+						grpc.WithBlock(),
+					)
 					if err != nil {
 						return err
 					}
@@ -291,14 +310,14 @@ func main() {
 
 					if deleteAll {
 						if isSet(mvmName) && !isSet(mvmNamespace) {
-							return errors.New("required: --namespace")
+							return fmt.Errorf("required: --namespace")
 						}
 					} else {
 						if isSet(mvmName) && !isSet(mvmNamespace) {
-							return errors.New("required: --namespace")
+							return fmt.Errorf("required: --namespace")
 						}
 						if !isSet(mvmName) && isSet(mvmNamespace) {
-							return errors.New("required: --name")
+							return fmt.Errorf("required: --name")
 						}
 					}
 
@@ -313,6 +332,7 @@ func main() {
 							for _, mvm := range list.Microvm {
 								fmt.Println(*mvm.Spec.Uid)
 							}
+
 							return nil
 						}
 					}
@@ -333,18 +353,18 @@ func main() {
 		},
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
+	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func prettyPrint(response interface{}) error {
-	resJson, err := json.MarshalIndent(response, "", "  ")
+	resJSON, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", string(resJson))
+
+	fmt.Printf("%s\n", string(resJSON))
 
 	return nil
 }
@@ -357,6 +377,7 @@ func getMicrovm(client v1alpha1.MicroVMClient, uid string) (*v1alpha1.GetMicroVM
 	getReq := v1alpha1.GetMicroVMRequest{
 		Uid: uid,
 	}
+
 	resp, err := client.GetMicroVM(context.Background(), &getReq)
 	if err != nil {
 		return nil, err
@@ -369,6 +390,7 @@ func deleteMicroVM(client v1alpha1.MicroVMClient, uid string) (*emptypb.Empty, e
 	delReq := v1alpha1.DeleteMicroVMRequest{
 		Uid: uid,
 	}
+
 	resp, err := client.DeleteMicroVM(context.Background(), &delReq)
 	if err != nil {
 		return nil, err
@@ -382,6 +404,7 @@ func listMicrovms(client v1alpha1.MicroVMClient, name, ns string) (*v1alpha1.Lis
 		Namespace: ns,
 		Name:      utils.PointyString(name),
 	}
+
 	resp, err := client.ListMicroVMs(context.Background(), &listReq)
 	if err != nil {
 		return nil, err
@@ -399,7 +422,7 @@ func processFile(file string) (string, string, string, error) {
 	}
 
 	if spec.Uid == nil && (!isSet(spec.Id) && !isSet(spec.Namespace)) {
-		return "", "", "", errors.New("required: uuid or name/namespace")
+		return "", "", "", fmt.Errorf("required: uuid or name/namespace")
 	}
 
 	if spec.Uid != nil {
