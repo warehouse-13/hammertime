@@ -103,8 +103,18 @@ Run `hammertime --help` for all options.
 
 ### Development
 
+For a list of all make commands, run `make help`.
+
 #### Testing
 
-Test can be run with `make test`.
+Our tests use [`ginkgo` v2](https://onsi.github.io/ginkgo/). To install v2 run:
 
-For a list of all make commands, run `make help`.
+```bash
+go install github.com/onsi/ginkgo/v2/ginkgo
+ginkgo version //should print out "Ginkgo Version 2.0.0"
+```
+
+Test can then be run with `make test`.
+
+All new code must be submitted with at least unit tests. All new or changed
+must come with a matching or updated integration test.

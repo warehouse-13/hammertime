@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
