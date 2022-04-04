@@ -17,20 +17,19 @@ import (
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
-// You will add lots of directives like these in the same package...
 //counterfeiter:generate -o fakeclient/ github.com/weaveworks/flintlock/api/services/microvm/v1alpha1.MicroVMClient
 
-type client struct {
+type Client struct {
 	flClient v1alpha1.MicroVMClient
 }
 
-func New(flClient v1alpha1.MicroVMClient) *client {
-	return &client{
+func New(flClient v1alpha1.MicroVMClient) Client {
+	return Client{
 		flClient: flClient,
 	}
 }
 
-func (c *client) Create(name, ns, jsonSpec, sshPath string) (*v1alpha1.CreateMicroVMResponse, error) {
+func (c *Client) Create(name, ns, jsonSpec, sshPath string) (*v1alpha1.CreateMicroVMResponse, error) {
 	var (
 		mvm *types.MicroVMSpec
 		err error
