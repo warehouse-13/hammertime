@@ -32,31 +32,6 @@ var _ = Describe("Client", func() {
 	})
 
 	It("creates a MicroVm", func() {
-		metaData, err := yaml.Marshal(instance.New(
-			instance.WithInstanceID(fmt.Sprintf("%s/%s", namespace, name)),
-			instance.WithLocalHostname(name),
-			instance.WithPlatform("liquid_metal"),
-		))
-		Expect(err).ToNot(HaveOccurred())
-		metadata := base64.StdEncoding.EncodeToString(metaData)
-
-		userData := &userdata.UserData{
-			HostName: name,
-			Users: []userdata.User{
-				{
-					Name: "root",
-				},
-			},
-			FinalMessage: "The Liquid Metal booted system is good to go after $UPTIME seconds",
-			BootCommands: []string{
-				"ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf",
-			},
-		}
-		data, err := yaml.Marshal(userData)
-		Expect(err).ToNot(HaveOccurred())
-
-		dataWithHeader := append([]byte("#cloud-config\n"), data...)
-		userdata := base64.StdEncoding.EncodeToString(dataWithHeader)
 		microVm := &v1alpha1.CreateMicroVMResponse{
 			Microvm: &types.MicroVM{
 				Spec: &types.MicroVMSpec{
@@ -73,15 +48,28 @@ var _ = Describe("Client", func() {
 		_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
 		Expect(inputReq.Microvm.Id).To(Equal(name))
 		Expect(inputReq.Microvm.Namespace).To(Equal(namespace))
-		Expect(inputReq.Microvm.Metadata["meta-data"]).To(Equal(metadata))
-		Expect(inputReq.Microvm.Metadata["user-data"]).To(Equal(userdata))
+
+		var userData userdata.UserData
+		data, err := base64.StdEncoding.DecodeString(inputReq.Microvm.Metadata["user-data"])
+		Expect(err).ToNot(HaveOccurred())
+		Expect(yaml.Unmarshal(data, &userData)).To(Succeed())
+		Expect(userData.HostName).To(Equal(name))
+		Expect(userData.Users[0].Name).To(Equal("root"))
+
+		var metaData instance.Metadata
+		data, err = base64.StdEncoding.DecodeString(inputReq.Microvm.Metadata["meta-data"])
+		Expect(err).ToNot(HaveOccurred())
+		Expect(yaml.Unmarshal(data, &metaData)).To(Succeed())
+		Expect(metaData["instance_id"]).To(Equal(fmt.Sprintf("%s/%s", namespace, name)))
+		Expect(metaData["local_hostname"]).To(Equal(name))
+		Expect(metaData["platform"]).To(Equal("liquid_metal"))
 
 		Expect(mockClient.CreateMicroVMCallCount()).To(Equal(1))
 		Expect(result.Microvm.Spec.Id).To(Equal(name))
 		Expect(result.Microvm.Spec.Namespace).To(Equal(namespace))
 	})
 
-	Context("when using sshkey", func() {
+	Context("when an sshkey file is set", func() {
 		Context("when file exists", func() {
 			var (
 				keyFile *os.File

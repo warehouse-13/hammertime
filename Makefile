@@ -7,14 +7,14 @@ build: ## Build hammertime
 
 .PHONY: test
 test: int unit
-	
+
 .PHONY: int
 int: ## Run integration tests
-		ginkgo -r test/
+	ginkgo -r test/
 
 .PHONY: unit
 unit: ## Run unit tests
-		ginkgo -r pkg/
+	ginkgo -r pkg/
 
 .PHONY: release
 release: ## Cross compile bins for linux, windows, mac
