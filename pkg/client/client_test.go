@@ -14,8 +14,8 @@ import (
 	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Callisto13/hammertime/pkg/client"
-	"github.com/Callisto13/hammertime/pkg/client/fakeclient"
+	"github.com/warehouse-13/hammertime/pkg/client"
+	"github.com/warehouse-13/hammertime/pkg/client/fakeclient"
 )
 
 var _ = Describe("Client", func() {

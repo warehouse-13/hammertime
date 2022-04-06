@@ -54,9 +54,9 @@ to change often until v1.
    make build
    ```
 
-2. Get a [released binary](https://github.com/Callisto13/hammertime/releases)
+2. Get a [released binary](https://github.com/warehouse-13/hammertime/releases)
 
-3. Install with go: `go install github.com/Callisto13/hammertime/releases@latest`
+3. Install with go: `go install github.com/warehouse-13/hammertime/releases@latest`
 
 Alias to `ht` if you like.
 
