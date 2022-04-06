@@ -6,8 +6,15 @@ build: ## Build hammertime
 	go build -o hammertime main.go
 
 .PHONY: test
-test: ## Run tests
-	ginkgo -r test
+test: int unit
+
+.PHONY: int
+int: ## Run integration tests
+	ginkgo -r test/
+
+.PHONY: unit
+unit: ## Run unit tests
+	ginkgo -r pkg/
 
 .PHONY: release
 release: ## Cross compile bins for linux, windows, mac
