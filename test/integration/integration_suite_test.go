@@ -24,10 +24,10 @@ func TestIntegration(t *testing.T) {
 
 	BeforeSuite(func() {
 		var err error
-		cliBin, err = gexec.Build("github.com/Callisto13/hammertime")
+		cliBin, err = gexec.Build("github.com/warehouse-13/hammertime")
 		Expect(err).NotTo(HaveOccurred())
 
-		serverBin, err = gexec.Build("github.com/Callisto13/hammertime/test/fakeserver")
+		serverBin, err = gexec.Build("github.com/warehouse-13/hammertime/test/fakeserver")
 		Expect(err).NotTo(HaveOccurred())
 
 		serverCmd := exec.Command(serverBin)

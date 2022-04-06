@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/Callisto13/hammertime/pkg/utils"
+	"github.com/warehouse-13/hammertime/pkg/utils"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
 	"github.com/weaveworks/flintlock/client/cloudinit/instance"

@@ -10,9 +10,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Callisto13/hammertime/pkg/client"
-	"github.com/Callisto13/hammertime/pkg/utils"
 	"github.com/urfave/cli/v2"
+	"github.com/warehouse-13/hammertime/pkg/client"
+	"github.com/warehouse-13/hammertime/pkg/utils"
 
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
