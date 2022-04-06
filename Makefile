@@ -1,9 +1,17 @@
 BIN_DIR := bin
 HT_CMD := .
 
+##@ Build
+
 .PHONY: build
 build: ## Build hammertime
 	go build -o hammertime main.go
+
+.PHONY: lint
+lint: ## Lint code
+	golangci-lint run -v --fast=false
+
+##@ Test
 
 .PHONY: test
 test: int unit
@@ -15,6 +23,8 @@ int: ## Run integration tests
 .PHONY: unit
 unit: ## Run unit tests
 	ginkgo -r pkg/
+
+##@ Release
 
 .PHONY: release
 release: ## Cross compile bins for linux, windows, mac

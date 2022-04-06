@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/warehouse-13/hammertime/pkg/utils"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
 	"github.com/weaveworks/flintlock/client/cloudinit/instance"
 	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
 	"gopkg.in/yaml.v2"
+
+	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -50,6 +51,7 @@ func (c *Client) Create(name, ns, jsonSpec, sshPath string) (*v1alpha1.CreateMic
 	createReq := v1alpha1.CreateMicroVMRequest{
 		Microvm: mvm,
 	}
+
 	resp, err := c.flClient.CreateMicroVM(context.Background(), &createReq)
 	if err != nil {
 		return nil, err
@@ -91,8 +93,8 @@ func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error)
 	return &types.MicroVMSpec{
 		Id:         name,
 		Namespace:  namespace,
-		Vcpu:       2,
-		MemoryInMb: 2048,
+		Vcpu:       2,    //nolint: gomnd // we don't care
+		MemoryInMb: 2048, //nolint: gomnd // we don't care
 		Kernel: &types.Kernel{
 			Image:            kernelImage,
 			Filename:         utils.PointyString("boot/vmlinux"),
@@ -129,6 +131,7 @@ func createUserData(name, sshPath string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		defaultUser.SSHAuthorizedKeys = []string{
 			sshKey,
 		}
