@@ -10,13 +10,14 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
-	"github.com/warehouse-13/hammertime/pkg/client"
-	"github.com/warehouse-13/hammertime/pkg/utils"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/warehouse-13/hammertime/pkg/client"
+	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 const (

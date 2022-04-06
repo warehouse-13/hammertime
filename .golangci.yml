@@ -24,6 +24,8 @@ linters-settings:
     locale: GB
   goimports:
     local-prefixes: github.com/warehouse-13/hammertime
+  gci:
+    local-prefixes: github.com/warehouse-13/hammertime
   govet:
     check-shadowing: true
   nolintlint:

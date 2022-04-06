@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/warehouse-13/hammertime/pkg/utils"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks/flintlock/api/types"
 	"github.com/weaveworks/flintlock/client/cloudinit/instance"
 	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
 	"gopkg.in/yaml.v2"
+
+	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -23,8 +24,8 @@ type Client struct {
 	flClient v1alpha1.MicroVMClient
 }
 
-func New(flClient v1alpha1.MicroVMClient) *Client {
-	return &Client{
+func New(flClient v1alpha1.MicroVMClient) Client {
+	return Client{
 		flClient: flClient,
 	}
 }
