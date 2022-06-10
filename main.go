@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/urfave/cli/v2"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
@@ -21,8 +20,7 @@ import (
 )
 
 const (
-	defaultDialTarget   = "127.0.0.1"
-	defaultPort         = "9090"
+	defaultDialTarget   = "127.0.0.1:9090"
 	defaultMvmName      = "mvm0"
 	defaultMvmNamespace = "ns0"
 )
@@ -30,7 +28,6 @@ const (
 func main() { //nolint // we are refactoring this file
 	var (
 		dialTarget   string
-		port         string
 		mvmName      string
 		mvmUID       string
 		mvmNamespace string
@@ -50,13 +47,6 @@ func main() { //nolint // we are refactoring this file
 				Aliases:     []string{"a"},
 				Usage:       "flintlock server address",
 				Destination: &dialTarget,
-			},
-			&cli.StringFlag{
-				Name:        "grpc-port",
-				Value:       defaultPort,
-				Aliases:     []string{"p"},
-				Usage:       "flintlock server port",
-				Destination: &port,
 			},
 		},
 		Commands: []*cli.Command{
@@ -93,9 +83,8 @@ func main() { //nolint // we are refactoring this file
 				},
 				Action: func(c *cli.Context) error {
 					conn, err := grpc.Dial(
-						fmt.Sprintf("%s:%s", dialTarget, port),
+						dialTarget,
 						grpc.WithTransportCredentials(insecure.NewCredentials()),
-						grpc.WithBlock(),
 					)
 					if err != nil {
 						return err
@@ -152,9 +141,8 @@ func main() { //nolint // we are refactoring this file
 				},
 				Action: func(c *cli.Context) error {
 					conn, err := grpc.Dial(
-						fmt.Sprintf("%s:%s", dialTarget, port),
+						dialTarget,
 						grpc.WithTransportCredentials(insecure.NewCredentials()),
-						grpc.WithBlock(),
 					)
 					if err != nil {
 						return err
@@ -190,15 +178,10 @@ func main() { //nolint // we are refactoring this file
 					}
 
 					if len(res.Microvm) > 1 {
-						var uuids []string
-						for _, microvm := range res.Microvm {
-							uuids = append(uuids, *microvm.Spec.Uid)
+						fmt.Printf("%d MicroVMs found under %s/%s:\n", len(res.Microvm), mvmNamespace, mvmName)
+						for _, mvm := range res.Microvm {
+							fmt.Println(*mvm.Spec.Uid)
 						}
-						fmt.Printf("%d MicroVMs found under %s/%s:\n%s",
-							len(res.Microvm),
-							mvmNamespace,
-							mvmName,
-							strings.Join(uuids, "\n"))
 
 						return nil
 					}
@@ -221,6 +204,12 @@ func main() { //nolint // we are refactoring this file
 				Usage: "list all microvms across all namespaces",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
+						Name:        "name",
+						Aliases:     []string{"n"},
+						Usage:       "microvm name",
+						Destination: &mvmName,
+					},
+					&cli.StringFlag{
 						Name:        "namespace",
 						Aliases:     []string{"ns"},
 						Usage:       "microvm namespace",
@@ -229,16 +218,15 @@ func main() { //nolint // we are refactoring this file
 				},
 				Action: func(c *cli.Context) error {
 					conn, err := grpc.Dial(
-						fmt.Sprintf("%s:%s", dialTarget, port),
+						dialTarget,
 						grpc.WithTransportCredentials(insecure.NewCredentials()),
-						grpc.WithBlock(),
 					)
 					if err != nil {
 						return err
 					}
 					defer conn.Close()
 
-					res, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), "", mvmNamespace)
+					res, err := listMicrovms(v1alpha1.NewMicroVMClient(conn), mvmName, mvmNamespace)
 					if err != nil {
 						return err
 					}
@@ -283,9 +271,8 @@ func main() { //nolint // we are refactoring this file
 				},
 				Action: func(c *cli.Context) error {
 					conn, err := grpc.Dial(
-						fmt.Sprintf("%s:%s", dialTarget, port),
+						dialTarget,
 						grpc.WithTransportCredentials(insecure.NewCredentials()),
-						grpc.WithBlock(),
 					)
 					if err != nil {
 						return err

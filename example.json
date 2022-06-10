@@ -21,7 +21,7 @@
       },
     "interfaces": [
       {
-        "guest_device_name": "eth1",
+        "device_id": "eth1",
         "type": 0
       }
     ],
