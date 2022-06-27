@@ -5,11 +5,10 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/config"
+	"github.com/warehouse-13/hammertime/pkg/dialler"
 	"github.com/warehouse-13/hammertime/pkg/flags"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
@@ -36,10 +35,7 @@ func getCommand() *cli.Command {
 }
 
 func getFn(cfg *config.Config) error {
-	conn, err := grpc.Dial(
-		cfg.GRPCAddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	conn, err := dialler.New(cfg.GRPCAddress)
 	if err != nil {
 		return err
 	}
