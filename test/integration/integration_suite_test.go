@@ -1,6 +1,8 @@
 package integration_test
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -12,7 +14,7 @@ import (
 
 var (
 	cliBin  string
-	address = "127.0.0.1"
+	address string
 )
 
 func TestIntegration(t *testing.T) {
@@ -30,20 +32,30 @@ func TestIntegration(t *testing.T) {
 		serverBin, err = gexec.Build("github.com/warehouse-13/hammertime/test/fakeserver")
 		Expect(err).NotTo(HaveOccurred())
 
-		serverCmd := exec.Command(serverBin)
-		serverSession, err = gexec.Start(serverCmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
+		if remote_test_server := os.Getenv("TEST_SERVER"); remote_test_server != "" {
+			address = remote_test_server
+			fmt.Fprintf(GinkgoWriter, "Using real Flintlock server at %s: tests may take a little longer", address)
+		} else {
+			serverCmd := exec.Command(serverBin)
+			serverSession, err = gexec.Start(serverCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			address = "127.0.0.1:9090"
+		}
 
 		// Sometimes the server doesn't start immediately, so we check that an
 		// endpoint is reachable before we carry on with the test.
 		getCmd := command{action: "get", args: []string{"--id", "foobar"}}
 		getSession := executeCommand(getCmd)
 		Eventually(getSession, "10s").Should(gexec.Exit(1))
-		Eventually(getSession.Err).Should(gbytes.Say("OHH WHAT A DISASTER"))
+		Eventually(getSession.Err).Should(gbytes.Say("rpc error"))
 	})
 
 	AfterSuite(func() {
-		serverSession.Terminate().Wait()
+		if serverSession != nil {
+			serverSession.Terminate().Wait()
+		}
+
 		gexec.CleanupBuildArtifacts()
 	})
 

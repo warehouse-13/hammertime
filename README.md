@@ -81,17 +81,14 @@ hammertime get -s
 # get
 hammertime get -i <UUID>
 
-# get all mvms across all namespaces
-hammertime list
+# get all mvms in `ns0`
+hammertime list --namespace ns0
 
 # delete 'bar' from 'foo'
 hammertime delete --namespace foo --name --bar
 
 # delete
 hammertime delete -i <UID>
-
-# delete all mvms everywhere
-hammertime delete --all
 ```
 
 The name and namespace are configurable, as are the GRPC address and port.
@@ -114,7 +111,7 @@ go install github.com/onsi/ginkgo/v2/ginkgo
 ginkgo version //should print out "Ginkgo Version 2.0.0"
 ```
 
-Test can then be run with `make test`.
+Tests can then be run with `make test`.
 
-All new code must be submitted with at least unit tests. All new or changed
+All new code must be submitted with at least unit tests. All new or changed core features
 must come with a matching or updated integration test.

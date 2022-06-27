@@ -78,7 +78,7 @@ func (s *fakeServer) GetMicroVM(ctx context.Context, req *mvmv1.GetMicroVMReques
 	}
 
 	if requestSpec == nil {
-		return nil, errors.New("OHH WHAT A DISASTER")
+		return nil, errors.New("rpc error: OHH WHAT A DISASTER")
 	}
 
 	return &mvmv1.GetMicroVMResponse{
@@ -94,6 +94,10 @@ func (s *fakeServer) GetMicroVM(ctx context.Context, req *mvmv1.GetMicroVMReques
 
 func (s *fakeServer) ListMicroVMs(ctx context.Context, req *mvmv1.ListMicroVMsRequest) (*mvmv1.ListMicroVMsResponse, error) {
 	microvms := []*types.MicroVM{}
+
+	if req.Name == nil || req.Namespace == "" {
+		return nil, errors.New("rpc error: not supported by flintlock")
+	}
 
 	for _, spec := range s.savedSpecs {
 		if shouldReturn(spec, req.Name, req.Namespace) {
@@ -117,11 +121,12 @@ func shouldReturn(spec *types.MicroVMSpec, name *string, namespace string) bool 
 	if spec.Namespace == namespace && spec.Id == *name {
 		return true
 	}
+
 	if spec.Namespace == namespace && *name == "" {
 		return true
 	}
 
-	return namespace == ""
+	return false
 }
 
 func (s *fakeServer) ListMicroVMsStream(req *mvmv1.ListMicroVMsRequest, streamServer mvmv1.MicroVM_ListMicroVMsStreamServer) error {
