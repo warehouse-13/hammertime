@@ -91,7 +91,7 @@ hammertime delete --namespace foo --name --bar
 hammertime delete -i <UID>
 ```
 
-The name and namespace are configurable, as are the GRPC address and port.
+The name and namespace are configurable, as is the GRPC address.
 There is the option to create with an SSH key.
 You can also pass a full json configfile to `create`, `get` and `delete` if you want to override
 everything (see [example.json](example.json)).
@@ -101,6 +101,8 @@ Run `hammertime --help` for all options.
 ### Development
 
 For a list of all make commands, run `make help`.
+
+You will need Go version >= `1.18`.
 
 #### Testing
 

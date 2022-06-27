@@ -47,6 +47,9 @@ issues:
   max-same-issues: 0
   max-issues-per-linter: 0
   exclude-rules:
+  - text: "do not define dynamic errors"
+    linters:
+    - goerr113
   - text: "shadow: declaration of \"err\" shadows declaration"
     linters:
     - govet
@@ -101,3 +104,4 @@ linters:
   - scopelint
   - tagliatelle
   - forbidigo
+  - exhaustruct

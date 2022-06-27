@@ -1,0 +1,53 @@
+package command
+
+import (
+	"github.com/urfave/cli/v2"
+	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/warehouse-13/hammertime/pkg/client"
+	"github.com/warehouse-13/hammertime/pkg/config"
+	"github.com/warehouse-13/hammertime/pkg/flags"
+	"github.com/warehouse-13/hammertime/pkg/utils"
+)
+
+func createCommand() *cli.Command {
+	cfg := &config.Config{}
+
+	return &cli.Command{
+		Name:    "create",
+		Usage:   "create a new microvm",
+		Aliases: []string{"c"},
+		Before:  flags.ParseFlags(cfg),
+		Flags: flags.CLIFlags(
+			flags.WithGRPCAddressFlag(),
+			flags.WithNameAndNamespaceFlags(),
+			flags.WithJSONSpecFlag(),
+			flags.WithSSHKeyFlag(),
+		),
+		Action: func(c *cli.Context) error {
+			return createFn(cfg)
+		},
+	}
+}
+
+func createFn(cfg *config.Config) error {
+	conn, err := grpc.Dial(
+		cfg.GRPCAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := client.New(v1alpha1.NewMicroVMClient(conn))
+
+	res, err := client.Create(cfg.MvmName, cfg.MvmNamespace, cfg.JSONFile, cfg.SSHKeyPath)
+	if err != nil {
+		return err
+	}
+
+	return utils.PrettyPrint(res)
+}

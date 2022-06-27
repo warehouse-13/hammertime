@@ -154,28 +154,28 @@ var _ = Describe("Integration", func() {
 })
 
 func create(opts ...string) *gexec.Session {
-	args := []string{"--grpc-address", address, "create"}
+	args := []string{"create", "--grpc-address", address}
 	args = append(args, opts...)
 
 	return runCmd(exec.Command(cliBin, args...))
 }
 
 func get(opts ...string) *gexec.Session {
-	args := []string{"--grpc-address", address, "get"}
+	args := []string{"get", "--grpc-address", address}
 	args = append(args, opts...)
 
 	return runCmd(exec.Command(cliBin, args...))
 }
 
 func list(opts ...string) *gexec.Session {
-	args := []string{"--grpc-address", address, "list"}
+	args := []string{"list", "--grpc-address", address}
 	args = append(args, opts...)
 
 	return runCmd(exec.Command(cliBin, args...))
 }
 
 func delete(opts ...string) *gexec.Session {
-	args := []string{"--grpc-address", address, "delete"}
+	args := []string{"delete", "--grpc-address", address}
 	args = append(args, opts...)
 
 	return runCmd(exec.Command(cliBin, args...))
