@@ -1,4 +1,4 @@
-package client_test
+package microvm_test
 
 import (
 	"testing"

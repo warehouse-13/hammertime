@@ -12,7 +12,7 @@ import (
 func ProcessFile(file string) (string, string, string, error) {
 	var uid, name, namespace string
 
-	spec, err := loadSpecFromFile(file)
+	spec, err := LoadSpecFromFile(file)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -31,7 +31,8 @@ func ProcessFile(file string) (string, string, string, error) {
 	return uid, name, namespace, nil
 }
 
-func loadSpecFromFile(file string) (*types.MicroVMSpec, error) {
+// LoadSpecFromFile reads the given json file and produces a MicroVMSpec.
+func LoadSpecFromFile(file string) (*types.MicroVMSpec, error) {
 	dat, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err

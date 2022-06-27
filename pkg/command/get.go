@@ -1,8 +1,6 @@
-package command
+package command //nolint: dupl // duplication here is fine
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 
@@ -10,6 +8,7 @@ import (
 	"github.com/warehouse-13/hammertime/pkg/config"
 	"github.com/warehouse-13/hammertime/pkg/dialler"
 	"github.com/warehouse-13/hammertime/pkg/flags"
+	"github.com/warehouse-13/hammertime/pkg/microvm"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
@@ -41,56 +40,16 @@ func getFn(cfg *config.Config) error {
 	}
 	defer conn.Close()
 
-	client := client.New(v1alpha1.NewMicroVMClient(conn))
+	mngr := microvm.NewManager(
+		client.New(
+			v1alpha1.NewMicroVMClient(conn),
+		),
+	)
 
-	if utils.IsSet(cfg.JSONFile) {
-		var err error
-
-		cfg.UUID, cfg.MvmName, cfg.MvmNamespace, err = utils.ProcessFile(cfg.JSONFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	if utils.IsSet(cfg.UUID) {
-		res, err := client.Get(cfg.UUID)
-		if err != nil {
-			return err
-		}
-
-		if cfg.State {
-			fmt.Println(res.Microvm.Status.State)
-
-			return nil
-		}
-
-		return utils.PrettyPrint(res)
-	}
-
-	res, err := client.List(cfg.MvmName, cfg.MvmNamespace)
+	res, err := mngr.Get(cfg)
 	if err != nil {
 		return err
 	}
 
-	if len(res.Microvm) > 1 {
-		fmt.Printf("%d MicroVMs found under %s/%s:\n", len(res.Microvm), cfg.MvmNamespace, cfg.MvmName)
-
-		for _, mvm := range res.Microvm {
-			fmt.Println(*mvm.Spec.Uid)
-		}
-
-		return nil
-	}
-
-	if len(res.Microvm) == 1 {
-		if cfg.State {
-			fmt.Println(res.Microvm[0].Status.State)
-
-			return nil
-		}
-
-		return utils.PrettyPrint(res.Microvm[0])
-	}
-
-	return fmt.Errorf("MicroVM %s/%s not found", cfg.MvmName, cfg.MvmNamespace)
+	return utils.PrettyPrint(res)
 }

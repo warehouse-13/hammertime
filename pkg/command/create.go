@@ -8,6 +8,7 @@ import (
 	"github.com/warehouse-13/hammertime/pkg/config"
 	"github.com/warehouse-13/hammertime/pkg/dialler"
 	"github.com/warehouse-13/hammertime/pkg/flags"
+	"github.com/warehouse-13/hammertime/pkg/microvm"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
@@ -38,9 +39,13 @@ func createFn(cfg *config.Config) error {
 	}
 	defer conn.Close()
 
-	client := client.New(v1alpha1.NewMicroVMClient(conn))
+	mngr := microvm.NewManager(
+		client.New(
+			v1alpha1.NewMicroVMClient(conn),
+		),
+	)
 
-	res, err := client.Create(cfg.MvmName, cfg.MvmNamespace, cfg.JSONFile, cfg.SSHKeyPath)
+	res, err := mngr.Create(cfg)
 	if err != nil {
 		return err
 	}

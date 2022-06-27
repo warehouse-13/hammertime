@@ -1,4 +1,4 @@
-package client_test
+package microvm_test
 
 import (
 	"encoding/base64"
@@ -16,6 +16,8 @@ import (
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/client/fakeclient"
+	"github.com/warehouse-13/hammertime/pkg/config"
+	"github.com/warehouse-13/hammertime/pkg/microvm"
 )
 
 var _ = Describe("Client", func() {
@@ -24,11 +26,13 @@ var _ = Describe("Client", func() {
 		namespace  = "Casper"
 		mockClient *fakeclient.FakeMicroVMClient
 		c          client.Client
+		m          microvm.MicroVMManager
 	)
 
 	BeforeEach(func() {
 		mockClient = new(fakeclient.FakeMicroVMClient)
 		c = client.New(mockClient)
+		m = microvm.NewManager(c)
 	})
 
 	It("creates a MicroVm", func() {
@@ -41,8 +45,13 @@ var _ = Describe("Client", func() {
 			},
 		}
 
+		cfg := &config.Config{
+			MvmName:      name,
+			MvmNamespace: namespace,
+		}
+
 		mockClient.CreateMicroVMReturns(microVm, nil)
-		result, err := c.Create(name, namespace, "", "")
+		result, err := m.Create(cfg)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
@@ -99,8 +108,14 @@ var _ = Describe("Client", func() {
 					},
 				}
 
+				cfg := &config.Config{
+					MvmName:      name,
+					MvmNamespace: namespace,
+					SSHKeyPath:   keyFile.Name(),
+				}
+
 				mockClient.CreateMicroVMReturns(microVm, nil)
-				_, err := c.Create(name, namespace, "", keyFile.Name())
+				_, err := m.Create(cfg)
 				Expect(err).ToNot(HaveOccurred())
 
 				_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
@@ -119,7 +134,11 @@ var _ = Describe("Client", func() {
 
 		Context("when file does not exist", func() {
 			It("returns an error", func() {
-				_, err := c.Create(name, namespace, "", "key.txt")
+				cfg := &config.Config{
+					SSHKeyPath: "key.txt",
+				}
+
+				_, err := m.Create(cfg)
 				Expect(err.Error()).To(ContainSubstring("no such file or directory"))
 			})
 		})
@@ -142,8 +161,12 @@ var _ = Describe("Client", func() {
 				},
 			}
 
+			cfg := &config.Config{
+				JSONFile: jsonSpec,
+			}
+
 			mockClient.CreateMicroVMReturns(microVm, nil)
-			result, err := c.Create("", "", jsonSpec, "")
+			result, err := m.Create(cfg)
 			Expect(err).ToNot(HaveOccurred())
 
 			_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
@@ -157,7 +180,11 @@ var _ = Describe("Client", func() {
 
 		Context("when file does not exist", func() {
 			It("returns an error", func() {
-				_, err := c.Create("", "", "./../../example1.json", "")
+				cfg := &config.Config{
+					JSONFile: "example1.json",
+				}
+
+				_, err := m.Create(cfg)
 				Expect(err.Error()).To(ContainSubstring("no such file or directory"))
 			})
 		})

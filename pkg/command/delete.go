@@ -1,8 +1,6 @@
-package command
+package command //nolint: dupl // duplication here is fine
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 
@@ -10,6 +8,7 @@ import (
 	"github.com/warehouse-13/hammertime/pkg/config"
 	"github.com/warehouse-13/hammertime/pkg/dialler"
 	"github.com/warehouse-13/hammertime/pkg/flags"
+	"github.com/warehouse-13/hammertime/pkg/microvm"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
@@ -34,73 +33,23 @@ func deleteCommand() *cli.Command {
 	}
 }
 
-func deleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring this file
+func deleteFn(cfg *config.Config) error {
 	conn, err := dialler.New(cfg.GRPCAddress)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	client := client.New(v1alpha1.NewMicroVMClient(conn))
+	mngr := microvm.NewManager(
+		client.New(
+			v1alpha1.NewMicroVMClient(conn),
+		),
+	)
 
-	if utils.IsSet(cfg.JSONFile) {
-		var err error
-
-		cfg.UUID, cfg.MvmName, cfg.MvmNamespace, err = utils.ProcessFile(cfg.JSONFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	if utils.IsSet(cfg.UUID) {
-		res, err := client.Delete(cfg.UUID)
-		if err != nil {
-			return err
-		}
-
-		return utils.PrettyPrint(res)
-	}
-
-	if cfg.DeleteAll {
-		if utils.IsSet(cfg.MvmName) && !utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --namespace")
-		}
-	} else {
-		if utils.IsSet(cfg.MvmName) && !utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --namespace")
-		}
-		if !utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --name")
-		}
-	}
-
-	list, err := client.List(cfg.MvmName, cfg.MvmNamespace)
+	res, err := mngr.Delete(cfg)
 	if err != nil {
 		return err
 	}
 
-	if utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) && !cfg.DeleteAll {
-		if len(list.Microvm) > 1 {
-			fmt.Printf("%d MicroVMs found under %s/%s:\n", len(list.Microvm), cfg.MvmNamespace, cfg.MvmName)
-
-			for _, mvm := range list.Microvm {
-				fmt.Println(*mvm.Spec.Uid)
-			}
-
-			return nil
-		}
-	}
-
-	for _, mvm := range list.Microvm {
-		res, err := client.Delete(*mvm.Spec.Uid)
-		if err != nil {
-			return err
-		}
-
-		if err := utils.PrettyPrint(res); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return utils.PrettyPrint(res)
 }
