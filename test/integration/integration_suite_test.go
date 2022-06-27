@@ -68,7 +68,7 @@ type command struct {
 }
 
 func executeCommand(command command) *gexec.Session {
-	var args = []string{"--grpc-address", address, command.action}
+	var args = []string{command.action, "--grpc-address", address}
 	cmd := exec.Command(cliBin, append(args, command.args...)...)
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())

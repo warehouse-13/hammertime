@@ -11,6 +11,7 @@ import (
 	"github.com/weaveworks/flintlock/api/types"
 	"github.com/weaveworks/flintlock/client/cloudinit/instance"
 	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"gopkg.in/yaml.v2"
 
 	"github.com/warehouse-13/hammertime/pkg/utils"
@@ -20,16 +21,20 @@ import (
 
 //counterfeiter:generate -o fakeclient/ github.com/weaveworks/flintlock/api/services/microvm/v1alpha1.MicroVMClient
 
+// Client is a wrapper around a v1alpha1.MicroVMClient.
 type Client struct {
+	// TODO we can probably inline this #23
 	flClient v1alpha1.MicroVMClient
 }
 
+// New returns a new flintlock Client.
 func New(flClient v1alpha1.MicroVMClient) Client {
 	return Client{
 		flClient: flClient,
 	}
 }
 
+// Create creates a new Microvm with the MicroVMClient.
 func (c *Client) Create(name, ns, jsonSpec, sshPath string) (*v1alpha1.CreateMicroVMResponse, error) {
 	var (
 		mvm *types.MicroVMSpec
@@ -60,6 +65,52 @@ func (c *Client) Create(name, ns, jsonSpec, sshPath string) (*v1alpha1.CreateMic
 	return resp, nil
 }
 
+// Get fetches a Microvm with the MicroVMClient by the given ID.
+// TODO: add tests as part of #23.
+func (c *Client) Get(uid string) (*v1alpha1.GetMicroVMResponse, error) {
+	getReq := v1alpha1.GetMicroVMRequest{
+		Uid: uid,
+	}
+
+	resp, err := c.flClient.GetMicroVM(context.Background(), &getReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// List fetches Microvms filtered by name and namespace.
+// TODO: add tests as part of #23.
+func (c *Client) List(name, ns string) (*v1alpha1.ListMicroVMsResponse, error) {
+	listReq := v1alpha1.ListMicroVMsRequest{
+		Namespace: ns,
+		Name:      utils.PointyString(name),
+	}
+
+	resp, err := c.flClient.ListMicroVMs(context.Background(), &listReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// Delete deletes a Microvm by the given id.
+// TODO: add tests as part of #23.
+func (c *Client) Delete(uid string) (*emptypb.Empty, error) {
+	delReq := v1alpha1.DeleteMicroVMRequest{
+		Uid: uid,
+	}
+
+	resp, err := c.flClient.DeleteMicroVM(context.Background(), &delReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func loadSpecFromFile(file string) (*types.MicroVMSpec, error) {
 	dat, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -74,6 +125,7 @@ func loadSpecFromFile(file string) (*types.MicroVMSpec, error) {
 	return spec, nil
 }
 
+// TODO: we can probably refactor this spec generation as part of #23.
 func defaultMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error) {
 	var (
 		kernelImage = "ghcr.io/weaveworks/flintlock-kernel:5.10.77"
