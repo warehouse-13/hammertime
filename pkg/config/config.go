@@ -1,5 +1,9 @@
 package config
 
+import (
+	"github.com/warehouse-13/hammertime/pkg/client"
+)
+
 type Config struct {
 	// GRPCAddress is the flintlock server address.
 	GRPCAddress string
@@ -18,4 +22,10 @@ type Config struct {
 	DeleteAll bool
 	// UUID is the id of a created Microvm.
 	UUID string
+
+	ClientConfig
+}
+
+type ClientConfig struct {
+	ClientBuilderFunc func(string) (client.FlintlockClient, error)
 }

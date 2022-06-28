@@ -1,4 +1,4 @@
-package client_test
+package command_test
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestClient(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Client Suite")
+	RunSpecs(t, "Command Suite")
 }

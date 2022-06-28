@@ -2,17 +2,22 @@ package command
 
 import (
 	"github.com/urfave/cli/v2"
-	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks/flintlock/api/types"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/config"
-	"github.com/warehouse-13/hammertime/pkg/dialler"
+	"github.com/warehouse-13/hammertime/pkg/defaults"
 	"github.com/warehouse-13/hammertime/pkg/flags"
+	"github.com/warehouse-13/hammertime/pkg/microvm"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 func createCommand() *cli.Command {
-	cfg := &config.Config{}
+	cfg := &config.Config{
+		ClientConfig: config.ClientConfig{
+			ClientBuilderFunc: client.New,
+		},
+	}
 
 	return &cli.Command{
 		Name:    "create",
@@ -26,24 +31,60 @@ func createCommand() *cli.Command {
 			flags.WithSSHKeyFlag(),
 		),
 		Action: func(c *cli.Context) error {
-			return createFn(cfg)
+			return CreateFn(cfg)
 		},
 	}
 }
 
-func createFn(cfg *config.Config) error {
-	conn, err := dialler.New(cfg.GRPCAddress)
+func CreateFn(cfg *config.Config) error {
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
 
-	client := client.New(v1alpha1.NewMicroVMClient(conn))
+	defer client.Close()
 
-	res, err := client.Create(cfg.MvmName, cfg.MvmNamespace, cfg.JSONFile, cfg.SSHKeyPath)
+	var mvm *types.MicroVMSpec
+
+	if utils.IsSet(cfg.JSONFile) {
+		mvm, err = utils.LoadSpecFromFile(cfg.JSONFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		mvm, err = newMicroVM(cfg.MvmName, cfg.MvmNamespace, cfg.SSHKeyPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	res, err := client.Create(mvm)
 	if err != nil {
 		return err
 	}
 
 	return utils.PrettyPrint(res)
+}
+
+func newMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error) {
+	mvm := defaults.BaseMicroVM()
+
+	metaData, err := microvm.CreateMetadata(name, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	userData, err := microvm.CreateUserData(name, sshPath)
+	if err != nil {
+		return nil, err
+	}
+
+	mvm.Id = name
+	mvm.Namespace = namespace
+	mvm.Metadata = map[string]string{
+		"meta-data": metaData,
+		"user-data": userData,
+	}
+
+	return mvm, nil
 }
