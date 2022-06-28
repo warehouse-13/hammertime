@@ -1,4 +1,4 @@
-package client_test
+package command_test
 
 import (
 	"encoding/base64"
@@ -16,19 +16,30 @@ import (
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/client/fakeclient"
+	"github.com/warehouse-13/hammertime/pkg/command"
+	"github.com/warehouse-13/hammertime/pkg/config"
 )
 
-var _ = Describe("Client", func() {
+var _ = Describe("CreateFn", func() {
 	var (
 		name       = "Pantalaimon"
 		namespace  = "Casper"
-		mockClient *fakeclient.FakeMicroVMClient
-		c          client.Client
+		mockClient *fakeclient.FakeFlintlockClient
+		cfg        *config.Config
 	)
 
 	BeforeEach(func() {
-		mockClient = new(fakeclient.FakeMicroVMClient)
-		c = client.New(mockClient)
+		mockClient = new(fakeclient.FakeFlintlockClient)
+		builderFunc := func(string) (client.FlintlockClient, error) {
+			return mockClient, nil
+		}
+		cfg = &config.Config{
+			ClientConfig: config.ClientConfig{
+				ClientBuilderFunc: builderFunc,
+			},
+			MvmName:      name,
+			MvmNamespace: namespace,
+		}
 	})
 
 	It("creates a MicroVm", func() {
@@ -41,32 +52,28 @@ var _ = Describe("Client", func() {
 			},
 		}
 
-		mockClient.CreateMicroVMReturns(microVm, nil)
-		result, err := c.Create(name, namespace, "", "")
+		mockClient.CreateReturns(microVm, nil)
+		err := command.CreateFn(cfg)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
-		Expect(inputReq.Microvm.Id).To(Equal(name))
-		Expect(inputReq.Microvm.Namespace).To(Equal(namespace))
+		input := mockClient.CreateArgsForCall(0)
+		Expect(input.Id).To(Equal(name))
+		Expect(input.Namespace).To(Equal(namespace))
 
 		var userData userdata.UserData
-		data, err := base64.StdEncoding.DecodeString(inputReq.Microvm.Metadata["user-data"])
+		data, err := base64.StdEncoding.DecodeString(input.Metadata["user-data"])
 		Expect(err).ToNot(HaveOccurred())
 		Expect(yaml.Unmarshal(data, &userData)).To(Succeed())
 		Expect(userData.HostName).To(Equal(name))
 		Expect(userData.Users[0].Name).To(Equal("root"))
 
 		var metaData instance.Metadata
-		data, err = base64.StdEncoding.DecodeString(inputReq.Microvm.Metadata["meta-data"])
+		data, err = base64.StdEncoding.DecodeString(input.Metadata["meta-data"])
 		Expect(err).ToNot(HaveOccurred())
 		Expect(yaml.Unmarshal(data, &metaData)).To(Succeed())
 		Expect(metaData["instance_id"]).To(Equal(fmt.Sprintf("%s/%s", namespace, name)))
 		Expect(metaData["local_hostname"]).To(Equal(name))
 		Expect(metaData["platform"]).To(Equal("liquid_metal"))
-
-		Expect(mockClient.CreateMicroVMCallCount()).To(Equal(1))
-		Expect(result.Microvm.Spec.Id).To(Equal(name))
-		Expect(result.Microvm.Spec.Namespace).To(Equal(namespace))
 	})
 
 	Context("when an sshkey file is set", func() {
@@ -85,6 +92,10 @@ var _ = Describe("Client", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
+			JustBeforeEach(func() {
+				cfg.SSHKeyPath = keyFile.Name()
+			})
+
 			AfterEach(func() {
 				Expect(os.Remove(keyFile.Name())).To(Succeed())
 			})
@@ -99,27 +110,31 @@ var _ = Describe("Client", func() {
 					},
 				}
 
-				mockClient.CreateMicroVMReturns(microVm, nil)
-				_, err := c.Create(name, namespace, "", keyFile.Name())
+				mockClient.CreateReturns(microVm, nil)
+				err := command.CreateFn(cfg)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
-				Expect(inputReq.Microvm.Id).To(Equal(name))
-				Expect(inputReq.Microvm.Namespace).To(Equal(namespace))
+				input := mockClient.CreateArgsForCall(0)
+				Expect(input.Id).To(Equal(name))
+				Expect(input.Namespace).To(Equal(namespace))
 				var user userdata.UserData
-				userData, err := base64.StdEncoding.DecodeString(inputReq.Microvm.Metadata["user-data"])
+				userData, err := base64.StdEncoding.DecodeString(input.Metadata["user-data"])
 				Expect(err).ToNot(HaveOccurred())
 				Expect(yaml.Unmarshal(userData, &user)).To(Succeed())
 				Expect(user.Users[0].Name).To(Equal("root"))
 				Expect(user.Users[0].SSHAuthorizedKeys[0]).To(Equal("this is a test key woohoo"))
 
-				Expect(mockClient.CreateMicroVMCallCount()).To(Equal(1))
+				Expect(mockClient.CreateCallCount()).To(Equal(1))
 			})
 		})
 
 		Context("when file does not exist", func() {
+			JustBeforeEach(func() {
+				cfg.SSHKeyPath = "foo.txt"
+			})
+
 			It("returns an error", func() {
-				_, err := c.Create(name, namespace, "", "key.txt")
+				err := command.CreateFn(cfg)
 				Expect(err.Error()).To(ContainSubstring("no such file or directory"))
 			})
 		})
@@ -132,6 +147,10 @@ var _ = Describe("Client", func() {
 			namespace = "ns1"
 		)
 
+		BeforeEach(func() {
+			cfg.JSONFile = jsonSpec
+		})
+
 		It("creates a MicroVm", func() {
 			microVm := &v1alpha1.CreateMicroVMResponse{
 				Microvm: &types.MicroVM{
@@ -142,22 +161,24 @@ var _ = Describe("Client", func() {
 				},
 			}
 
-			mockClient.CreateMicroVMReturns(microVm, nil)
-			result, err := c.Create("", "", jsonSpec, "")
+			mockClient.CreateReturns(microVm, nil)
+			err := command.CreateFn(cfg)
 			Expect(err).ToNot(HaveOccurred())
 
-			_, inputReq, _ := mockClient.CreateMicroVMArgsForCall(0)
-			Expect(inputReq.Microvm.Id).To(Equal(name))
-			Expect(inputReq.Microvm.Namespace).To(Equal(namespace))
+			input := mockClient.CreateArgsForCall(0)
+			Expect(input.Id).To(Equal(name))
+			Expect(input.Namespace).To(Equal(namespace))
 
-			Expect(mockClient.CreateMicroVMCallCount()).To(Equal(1))
-			Expect(result.Microvm.Spec.Id).To(Equal(name))
-			Expect(result.Microvm.Spec.Namespace).To(Equal(namespace))
+			Expect(mockClient.CreateCallCount()).To(Equal(1))
 		})
 
 		Context("when file does not exist", func() {
+			BeforeEach(func() {
+				cfg.JSONFile = "./../../example1.json"
+			})
+
 			It("returns an error", func() {
-				_, err := c.Create("", "", "./../../example1.json", "")
+				err := command.CreateFn(cfg)
 				Expect(err.Error()).To(ContainSubstring("no such file or directory"))
 			})
 		})

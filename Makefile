@@ -24,6 +24,10 @@ int: ## Run integration tests
 unit: ## Run unit tests
 	ginkgo -r pkg/
 
+.PHONY: mock
+mock: ## Generate mocks
+	go generate ./...
+
 ##@ Release
 
 .PHONY: release

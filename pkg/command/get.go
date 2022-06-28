@@ -4,17 +4,19 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli/v2"
-	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/config"
-	"github.com/warehouse-13/hammertime/pkg/dialler"
 	"github.com/warehouse-13/hammertime/pkg/flags"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 func getCommand() *cli.Command {
-	cfg := &config.Config{}
+	cfg := &config.Config{
+		ClientConfig: config.ClientConfig{
+			ClientBuilderFunc: client.New,
+		},
+	}
 
 	return &cli.Command{
 		Name:    "get",
@@ -29,19 +31,19 @@ func getCommand() *cli.Command {
 			flags.WithIDFlag(),
 		),
 		Action: func(c *cli.Context) error {
-			return getFn(cfg)
+			return GetFn(cfg)
 		},
 	}
 }
 
-func getFn(cfg *config.Config) error {
-	conn, err := dialler.New(cfg.GRPCAddress)
+// TODO: add tests as part of #54.
+func GetFn(cfg *config.Config) error {
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
 
-	client := client.New(v1alpha1.NewMicroVMClient(conn))
+	defer client.Close()
 
 	if utils.IsSet(cfg.JSONFile) {
 		var err error

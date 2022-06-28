@@ -2,17 +2,19 @@ package command
 
 import (
 	"github.com/urfave/cli/v2"
-	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/config"
-	"github.com/warehouse-13/hammertime/pkg/dialler"
 	"github.com/warehouse-13/hammertime/pkg/flags"
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 func listCommand() *cli.Command {
-	cfg := &config.Config{}
+	cfg := &config.Config{
+		ClientConfig: config.ClientConfig{
+			ClientBuilderFunc: client.New,
+		},
+	}
 
 	return &cli.Command{
 		Name:    "list",
@@ -24,19 +26,19 @@ func listCommand() *cli.Command {
 			flags.WithNameAndNamespaceFlags(),
 		),
 		Action: func(c *cli.Context) error {
-			return listFn(cfg)
+			return ListFn(cfg)
 		},
 	}
 }
 
-func listFn(cfg *config.Config) error {
-	conn, err := dialler.New(cfg.GRPCAddress)
+// TODO: add tests as part of #54.
+func ListFn(cfg *config.Config) error {
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
 
-	client := client.New(v1alpha1.NewMicroVMClient(conn))
+	defer client.Close()
 
 	res, err := client.List(cfg.MvmName, cfg.MvmNamespace)
 	if err != nil {
