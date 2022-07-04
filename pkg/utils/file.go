@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/weaveworks/flintlock/api/types"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 )
 
 // ProcessFile will open the given file and process the JSON into a MicroVMSpec.

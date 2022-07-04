@@ -8,11 +8,12 @@ import (
 	"os"
 
 	uuid "github.com/nu7hatch/gouuid"
-	"github.com/warehouse-13/hammertime/pkg/utils"
-	mvmv1 "github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
-	"github.com/weaveworks/flintlock/api/types"
+	mvmv1 "github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 func main() {
@@ -37,8 +38,12 @@ type fakeServer struct {
 	savedSpecs []*types.MicroVMSpec
 }
 
-func (s *fakeServer) CreateMicroVM(ctx context.Context, req *mvmv1.CreateMicroVMRequest) (*mvmv1.CreateMicroVMResponse, error) {
+func (s *fakeServer) CreateMicroVM(
+	ctx context.Context,
+	req *mvmv1.CreateMicroVMRequest,
+) (*mvmv1.CreateMicroVMResponse, error) {
 	spec := req.Microvm
+
 	uid, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
@@ -63,6 +68,7 @@ func (s *fakeServer) DeleteMicroVM(ctx context.Context, req *mvmv1.DeleteMicroVM
 			s.savedSpecs[i] = s.savedSpecs[len(s.savedSpecs)-1]
 		}
 	}
+
 	s.savedSpecs = s.savedSpecs[:len(s.savedSpecs)-1]
 
 	return &emptypb.Empty{}, nil
@@ -92,7 +98,10 @@ func (s *fakeServer) GetMicroVM(ctx context.Context, req *mvmv1.GetMicroVMReques
 	}, nil
 }
 
-func (s *fakeServer) ListMicroVMs(ctx context.Context, req *mvmv1.ListMicroVMsRequest) (*mvmv1.ListMicroVMsResponse, error) {
+func (s *fakeServer) ListMicroVMs(
+	ctx context.Context,
+	req *mvmv1.ListMicroVMsRequest,
+) (*mvmv1.ListMicroVMsResponse, error) {
 	microvms := []*types.MicroVM{}
 
 	if req.Name == nil || req.Namespace == "" {
@@ -129,6 +138,9 @@ func shouldReturn(spec *types.MicroVMSpec, name *string, namespace string) bool 
 	return false
 }
 
-func (s *fakeServer) ListMicroVMsStream(req *mvmv1.ListMicroVMsRequest, streamServer mvmv1.MicroVM_ListMicroVMsStreamServer) error {
+func (s *fakeServer) ListMicroVMsStream(
+	req *mvmv1.ListMicroVMsRequest,
+	streamServer mvmv1.MicroVM_ListMicroVMsStreamServer,
+) error {
 	return nil
 }

@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/urfave/cli/v2"
-	"github.com/weaveworks/flintlock/api/types"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/config"

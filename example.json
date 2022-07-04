@@ -14,7 +14,6 @@
     "root_volume": {
         "id": "root",
         "is_read_only": false,
-        "mount_point": "/",
         "source": {
           "container_source": "ghcr.io/weaveworks/capmvm-kubernetes:1.21.8"
         }

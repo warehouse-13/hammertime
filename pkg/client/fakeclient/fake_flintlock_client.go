@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
-	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
-	"github.com/weaveworks/flintlock/api/types"
+	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

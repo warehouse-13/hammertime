@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
 )
 
 var _ = Describe("Integration", func() {

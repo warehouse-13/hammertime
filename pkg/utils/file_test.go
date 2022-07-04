@@ -7,8 +7,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
+
 	"github.com/warehouse-13/hammertime/pkg/utils"
-	"github.com/weaveworks/flintlock/api/types"
 )
 
 var _ = Describe("ProcessFile", func() {
