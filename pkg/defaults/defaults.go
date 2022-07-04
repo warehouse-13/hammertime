@@ -1,7 +1,7 @@
 package defaults
 
 import (
-	"github.com/weaveworks/flintlock/api/types"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
@@ -35,7 +35,6 @@ func BaseMicroVM() *types.MicroVMSpec {
 		RootVolume: &types.Volume{
 			Id:         "root",
 			IsReadOnly: false,
-			MountPoint: "/",
 			Source: &types.VolumeSource{
 				ContainerSource: utils.PointyString(CloudImage),
 			},

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/weaveworks/flintlock/client/cloudinit/instance"
-	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
+	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/instance"
+	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/userdata"
 	"gopkg.in/yaml.v2"
 
 	"github.com/warehouse-13/hammertime/pkg/utils"

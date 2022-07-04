@@ -8,10 +8,10 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/weaveworks/flintlock/api/services/microvm/v1alpha1"
-	"github.com/weaveworks/flintlock/api/types"
-	"github.com/weaveworks/flintlock/client/cloudinit/instance"
-	"github.com/weaveworks/flintlock/client/cloudinit/userdata"
+	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
+	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/instance"
+	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/userdata"
 	"gopkg.in/yaml.v2"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
