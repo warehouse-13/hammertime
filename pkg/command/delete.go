@@ -25,7 +25,7 @@ func deleteCommand() *cli.Command {
 		Before:  flags.ParseFlags(cfg),
 		Flags: flags.CLIFlags(
 			flags.WithGRPCAddressFlag(),
-			flags.WithNameAndNamespaceFlags(),
+			flags.WithNameAndNamespaceFlags(true),
 			flags.WithIDFlag(),
 			flags.WithJSONSpecFlag(),
 			flags.WithAllFlag(),
