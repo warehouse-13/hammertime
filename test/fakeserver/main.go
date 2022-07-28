@@ -104,10 +104,6 @@ func (s *fakeServer) ListMicroVMs(
 ) (*mvmv1.ListMicroVMsResponse, error) {
 	microvms := []*types.MicroVM{}
 
-	if req.Name == nil || req.Namespace == "" {
-		return nil, errors.New("rpc error: not supported by flintlock")
-	}
-
 	for _, spec := range s.savedSpecs {
 		if shouldReturn(spec, req.Name, req.Namespace) {
 			m := &types.MicroVM{
@@ -135,7 +131,7 @@ func shouldReturn(spec *types.MicroVMSpec, name *string, namespace string) bool 
 		return true
 	}
 
-	return false
+	return namespace == ""
 }
 
 func (s *fakeServer) ListMicroVMsStream(

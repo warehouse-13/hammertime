@@ -25,7 +25,7 @@ func deleteCommand() *cli.Command {
 		Before:  flags.ParseFlags(cfg),
 		Flags: flags.CLIFlags(
 			flags.WithGRPCAddressFlag(),
-			flags.WithNameAndNamespaceFlags(true),
+			flags.WithNameAndNamespaceFlags(false),
 			flags.WithIDFlag(),
 			flags.WithJSONSpecFlag(),
 			flags.WithAllFlag(),
@@ -63,14 +63,11 @@ func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring
 		return utils.PrettyPrint(res)
 	}
 
-	if cfg.DeleteAll {
+	if !cfg.DeleteAll {
 		if utils.IsSet(cfg.MvmName) && !utils.IsSet(cfg.MvmNamespace) {
 			return fmt.Errorf("required: --namespace")
 		}
-	} else {
-		if utils.IsSet(cfg.MvmName) && !utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --namespace")
-		}
+
 		if !utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) {
 			return fmt.Errorf("required: --name")
 		}

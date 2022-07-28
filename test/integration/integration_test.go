@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -9,6 +10,12 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
+)
+
+const (
+	timeout  = "30s"
+	interval = "5s"
 )
 
 var _ = Describe("Integration", func() {
@@ -20,8 +27,6 @@ var _ = Describe("Integration", func() {
 		jsonNamespace    = "ns1"
 		jsonName         = "mvm1"
 		jsonFile         = "./../../example.json"
-		timeout          = "30s"
-		interval         = "5s"
 
 		created1 v1alpha1.CreateMicroVMResponse
 		created2 v1alpha1.CreateMicroVMResponse
@@ -30,14 +35,7 @@ var _ = Describe("Integration", func() {
 	)
 
 	AfterEach(func() {
-		// TODO do this a bit smarter
-		_ = delete("--id", *created1.Microvm.Spec.Uid)
-
-		_ = delete("--id", *created2.Microvm.Spec.Uid)
-
-		_ = delete("--id", *created3.Microvm.Spec.Uid)
-
-		_ = delete("--id", *created4.Microvm.Spec.Uid)
+		_ = delete("--all")
 	})
 
 	It("Can interact with a flintlock server", func() {
@@ -81,14 +79,13 @@ var _ = Describe("Integration", func() {
 		Expect(json.Unmarshal(session.Out.Contents(), &getResult)).To(Succeed())
 		Expect(getResult.Microvm.Spec.Id).To(Equal(created1.Microvm.Spec.Id))
 
-		// TODO this test fails and I have zero idea why
-		// By("getting a MicroVM with a json file")
-		// session = get("--file", jsonFile)
-		// Eventually(session, timeout, interval).Should(gexec.Exit(0))
+		By("getting a MicroVM with a json file")
+		session = get("--file", jsonFile)
+		Eventually(session, timeout, interval).Should(gexec.Exit(0))
 
-		// var getResult2 v1alpha1.GetMicroVMResponse
-		// Expect(json.Unmarshal(session.Out.Contents(), &getResult2)).To(Succeed())
-		// Expect(getResult2.Microvm.Spec.Id).To(Equal(created1.Microvm.Spec.Id))
+		var getResult2 types.MicroVM
+		Expect(json.Unmarshal(session.Out.Contents(), &getResult2)).To(Succeed())
+		Expect(getResult2.Spec.Id).To(Equal(created4.Microvm.Spec.Id))
 
 		By("listing all MicroVMs in a set namespace/name group")
 		session = list("--namespace", namespace, "--name", defaultName)
@@ -106,16 +103,27 @@ var _ = Describe("Integration", func() {
 		Expect(json.Unmarshal(session.Out.Contents(), &list2)).To(Succeed())
 		Expect(list2.Microvm).To(HaveLen(1))
 
+		By("listing all MicroVMs in all namespaces")
+		createALotOfMVMs(namespace, name)
+		Expect(listAll()).To(Equal(14))
+
 		By("deleting a MicroVM by UUID")
-		// TODO all deletions are here now but they can be moved after #41
 		Eventually(func(g Gomega) {
 			session := delete("--id", *created1.Microvm.Spec.Uid)
 			g.Expect(session.Wait()).To(gexec.Exit(0))
+		}, timeout, interval).Should(Succeed())
 
-			session = delete("--id", *created2.Microvm.Spec.Uid)
-			g.Expect(session.Wait()).To(gexec.Exit(0))
+		Eventually(func(g Gomega) {
+			session := get("--id", *created1.Microvm.Spec.Uid)
+			g.Expect(session.Wait()).To(gexec.Exit(1))
+			g.Expect(session.Err).To(gbytes.Say("rpc error"))
+		}, timeout, interval).Should(Succeed())
 
-			session = delete("--id", *created3.Microvm.Spec.Uid)
+		Expect(listAll()).To(Equal(13))
+
+		By("deleting all MicroVMs in a namespace")
+		Eventually(func(g Gomega) {
+			session := delete("--all", "--namespace", defaultNamespace)
 			g.Expect(session.Wait()).To(gexec.Exit(0))
 		}, timeout, interval).Should(Succeed())
 
@@ -127,29 +135,45 @@ var _ = Describe("Integration", func() {
 			session = get("--id", *created2.Microvm.Spec.Uid)
 			g.Expect(session.Wait()).To(gexec.Exit(1))
 			g.Expect(session.Err).To(gbytes.Say("rpc error"))
-
-			session = get("--id", *created3.Microvm.Spec.Uid)
-			g.Expect(session.Wait()).To(gexec.Exit(1))
-			g.Expect(session.Err).To(gbytes.Say("rpc error"))
 		}, timeout, interval).Should(Succeed())
 
-		// TODO #41
-		By("deleting all MicroVMs in a namespace")
+		Expect(listAll()).To(Equal(7))
 
-		// TODO #41
 		By("deleting all MicroVMs in a name/namespace group")
-
-		By("deleting a MicroVM with a json file")
 		Eventually(func(g Gomega) {
-			session = delete("--id", *created4.Microvm.Spec.Uid)
+			session := delete("--all", "--namespace", namespace, "--name", defaultName)
 			g.Expect(session.Wait()).To(gexec.Exit(0))
 		}, timeout, interval).Should(Succeed())
 
 		Eventually(func(g Gomega) {
-			session = get("--id", *created4.Microvm.Spec.Uid)
+			session := get("--id", *created3.Microvm.Spec.Uid)
 			g.Expect(session.Wait()).To(gexec.Exit(1))
 			g.Expect(session.Err).To(gbytes.Say("rpc error"))
 		}, timeout, interval).Should(Succeed())
+
+		Expect(listAll()).To(Equal(6))
+
+		By("deleting a MicroVM with a json file")
+		Eventually(func(g Gomega) {
+			session = delete("--file", jsonFile)
+			g.Expect(session.Wait()).To(gexec.Exit(0))
+		}, timeout, interval).Should(Succeed())
+
+		Eventually(func(g Gomega) {
+			session = get("--file", jsonFile)
+			g.Expect(session.Wait()).To(gexec.Exit(1))
+			g.Expect(session.Err).To(gbytes.Say(fmt.Sprintf("MicroVM %s/%s not found", jsonNamespace, jsonName)))
+		}, timeout, interval).Should(Succeed())
+
+		Expect(listAll()).To(Equal(5))
+
+		By("deleting all MicroVMs in all namespaces")
+		Eventually(func(g Gomega) {
+			session = delete("--all")
+			g.Expect(session.Wait()).To(gexec.Exit(0))
+		}, timeout, interval).Should(Succeed())
+
+		Expect(listAll()).To(Equal(0))
 	})
 })
 
@@ -186,4 +210,23 @@ func runCmd(cmd *exec.Cmd) *gexec.Session {
 	Expect(err).NotTo(HaveOccurred())
 
 	return session
+}
+
+func createALotOfMVMs(namespace, name string) {
+	for i := 0; i < 5; i++ {
+		session := create()
+		Eventually(session, timeout, interval).Should(gexec.Exit(0))
+
+		session = create("--namespace", namespace, "--name", name)
+		Eventually(session, timeout, interval).Should(gexec.Exit(0))
+	}
+}
+
+func listAll() int {
+	session := list()
+	Eventually(session, timeout, interval).Should(gexec.Exit(0))
+
+	var list v1alpha1.ListMicroVMsResponse
+	Expect(json.Unmarshal(session.Out.Contents(), &list)).To(Succeed())
+	return len(list.Microvm)
 }
