@@ -94,5 +94,5 @@ func GetFn(cfg *config.Config) error {
 		return utils.PrettyPrint(res.Microvm[0])
 	}
 
-	return fmt.Errorf("MicroVM %s/%s not found", cfg.MvmName, cfg.MvmNamespace)
+	return fmt.Errorf("MicroVM %s/%s not found", cfg.MvmNamespace, cfg.MvmName)
 }

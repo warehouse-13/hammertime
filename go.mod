@@ -6,8 +6,8 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/urfave/cli/v2 v2.10.2
-	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20220712100919-d83c10343716
-	github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220712100919-d83c10343716
+	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20220722132608-982d429ba641
+	github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
