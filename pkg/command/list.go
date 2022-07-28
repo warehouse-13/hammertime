@@ -23,7 +23,7 @@ func listCommand() *cli.Command {
 		Before:  flags.ParseFlags(cfg),
 		Flags: flags.CLIFlags(
 			flags.WithGRPCAddressFlag(),
-			flags.WithNameAndNamespaceFlags(),
+			flags.WithNameAndNamespaceFlags(false),
 		),
 		Action: func(c *cli.Context) error {
 			return ListFn(cfg)

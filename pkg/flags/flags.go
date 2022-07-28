@@ -38,21 +38,27 @@ func WithGRPCAddressFlag() WithFlagsFunc {
 }
 
 // WithNameAndNamespaceFlags adds the name and namespace flags to the command.
-func WithNameAndNamespaceFlags() WithFlagsFunc {
+func WithNameAndNamespaceFlags(withDefaults bool) WithFlagsFunc {
+	nameFlag := &cli.StringFlag{
+		Name:    "name",
+		Aliases: []string{"n"},
+		Usage:   "microvm name",
+	}
+	namespaceFlag := &cli.StringFlag{
+		Name:    "namespace",
+		Aliases: []string{"ns"},
+		Usage:   "microvm namespace",
+	}
+
+	if withDefaults {
+		nameFlag.Value = defaults.MvmName
+		namespaceFlag.Value = defaults.MvmNamespace
+	}
+
 	return func() []cli.Flag {
 		return []cli.Flag{
-			&cli.StringFlag{
-				Name:    "name",
-				Value:   defaults.MvmName,
-				Aliases: []string{"n"},
-				Usage:   "microvm name",
-			},
-			&cli.StringFlag{
-				Name:    "namespace",
-				Value:   defaults.MvmNamespace,
-				Aliases: []string{"ns"},
-				Usage:   "microvm namespace",
-			},
+			nameFlag,
+			namespaceFlag,
 		}
 	}
 }
