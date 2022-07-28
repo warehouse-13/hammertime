@@ -20,6 +20,8 @@ type Config struct {
 	State bool
 	// DeleteAll configures all microvms to be deleted. Can only be used with `delete`.
 	DeleteAll bool
+	// Silent stops the response from being printed. Can only be used with `create` and `delete`.
+	Silent bool
 	// UUID is the id of a created Microvm.
 	UUID string
 

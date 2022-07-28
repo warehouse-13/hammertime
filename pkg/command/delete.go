@@ -29,6 +29,7 @@ func deleteCommand() *cli.Command {
 			flags.WithIDFlag(),
 			flags.WithJSONSpecFlag(),
 			flags.WithAllFlag(),
+			flags.WithQuietFlag(),
 		),
 		Action: func(c *cli.Context) error {
 			return DeleteFn(cfg)
@@ -60,16 +61,16 @@ func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring
 			return err
 		}
 
+		if cfg.Silent {
+			return nil
+		}
+
 		return utils.PrettyPrint(res)
 	}
 
 	if !cfg.DeleteAll {
-		if utils.IsSet(cfg.MvmName) && !utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --namespace")
-		}
-
-		if !utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --name")
+		if !utils.IsSet(cfg.MvmName) || !utils.IsSet(cfg.MvmNamespace) {
+			return fmt.Errorf("required: --namespace, --name")
 		}
 	}
 
@@ -96,8 +97,10 @@ func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring
 			return err
 		}
 
-		if err := utils.PrettyPrint(res); err != nil {
-			return err
+		if !cfg.Silent {
+			if err := utils.PrettyPrint(res); err != nil {
+				return err
+			}
 		}
 	}
 
