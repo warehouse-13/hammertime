@@ -128,6 +128,19 @@ func WithAllFlag() WithFlagsFunc {
 	}
 }
 
+// WithQuietFlag adds a silent flag to the command.
+func WithQuietFlag() WithFlagsFunc {
+	return func() []cli.Flag {
+		return []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "quiet",
+				Aliases: []string{"q"},
+				Usage:   "silence the output on the command",
+			},
+		}
+	}
+}
+
 // ParseFlags processes all flags on the CLI context and builds a config object
 // which will be used in the command's action.
 func ParseFlags(cfg *config.Config) cli.BeforeFunc {
@@ -142,6 +155,7 @@ func ParseFlags(cfg *config.Config) cli.BeforeFunc {
 
 		cfg.State = ctx.Bool("state")
 		cfg.DeleteAll = ctx.Bool("all")
+		cfg.Silent = ctx.Bool("quiet")
 
 		cfg.UUID = ctx.String("id")
 

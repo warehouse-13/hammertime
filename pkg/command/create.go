@@ -29,6 +29,7 @@ func createCommand() *cli.Command {
 			flags.WithNameAndNamespaceFlags(true),
 			flags.WithJSONSpecFlag(),
 			flags.WithSSHKeyFlag(),
+			flags.WithQuietFlag(),
 		),
 		Action: func(c *cli.Context) error {
 			return CreateFn(cfg)
@@ -61,6 +62,10 @@ func CreateFn(cfg *config.Config) error {
 	res, err := client.Create(mvm)
 	if err != nil {
 		return err
+	}
+
+	if cfg.Silent {
+		return nil
 	}
 
 	return utils.PrettyPrint(res)
