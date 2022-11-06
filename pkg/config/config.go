@@ -24,6 +24,8 @@ type Config struct {
 	Silent bool
 	// UUID is the id of a created Microvm.
 	UUID string
+	// Token used for basic auth
+	Token string
 
 	ClientConfig
 }

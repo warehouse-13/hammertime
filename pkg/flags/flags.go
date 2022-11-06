@@ -141,6 +141,18 @@ func WithQuietFlag() WithFlagsFunc {
 	}
 }
 
+func WithBasicAuthFlag() WithFlagsFunc {
+	return func() []cli.Flag {
+		return []cli.Flag{
+			&cli.StringFlag{
+				Name:    "token",
+				Aliases: []string{"t"},
+				Usage:   "basic auth",
+			},
+		}
+	}
+}
+
 // ParseFlags processes all flags on the CLI context and builds a config object
 // which will be used in the command's action.
 func ParseFlags(cfg *config.Config) cli.BeforeFunc {
@@ -158,6 +170,8 @@ func ParseFlags(cfg *config.Config) cli.BeforeFunc {
 		cfg.Silent = ctx.Bool("quiet")
 
 		cfg.UUID = ctx.String("id")
+
+		cfg.Token = ctx.String("token")
 
 		return nil
 	}

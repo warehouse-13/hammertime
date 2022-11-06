@@ -29,6 +29,7 @@ func getCommand() *cli.Command {
 			flags.WithJSONSpecFlag(),
 			flags.WithStateFlag(),
 			flags.WithIDFlag(),
+			flags.WithBasicAuthFlag(),
 		),
 		Action: func(c *cli.Context) error {
 			return GetFn(cfg)

@@ -1,15 +1,27 @@
 package dialler
 
 import (
+	"github.com/warehouse-13/hammertime/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 // New process the dial config and returns a grpc.ClientConn. The caller is
 // responsible for closing the connection.
-func New(address string) (*grpc.ClientConn, error) {
+func New(address, basicAuthToken string) (*grpc.ClientConn, error) {
+
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	}
+
+	if basicAuthToken != "" {
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
+			auth.Basic(basicAuthToken),
+		))
+	}
+
 	return grpc.Dial(
 		address,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		dialOpts...,
 	)
 }
