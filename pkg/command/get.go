@@ -39,7 +39,7 @@ func getCommand() *cli.Command {
 
 // TODO: add tests as part of #54.
 func GetFn(cfg *config.Config) error {
-	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress)
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
 	}

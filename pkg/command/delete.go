@@ -30,6 +30,7 @@ func deleteCommand() *cli.Command {
 			flags.WithJSONSpecFlag(),
 			flags.WithAllFlag(),
 			flags.WithQuietFlag(),
+			flags.WithBasicAuthFlag(),
 		),
 		Action: func(c *cli.Context) error {
 			return DeleteFn(cfg)
@@ -39,7 +40,7 @@ func deleteCommand() *cli.Command {
 
 // TODO: add tests as part of #54.
 func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring this file
-	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress)
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
 	}

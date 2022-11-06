@@ -30,8 +30,8 @@ type FlintlockClient interface {
 }
 
 // New returns a new flintlock Client.
-func New(address string) (FlintlockClient, error) {
-	conn, err := dialler.New(address, "secret")
+func New(address, basicAuthToken string) (FlintlockClient, error) {
+	conn, err := dialler.New(address, basicAuthToken)
 	if err != nil {
 		return nil, err
 	}

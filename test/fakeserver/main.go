@@ -31,7 +31,7 @@ func main() {
 	}
 
 	s := &fakeServer{}
-	token := "secret"
+	token := os.Getenv("AUTH_TOKEN")
 	grpcServer := grpc.NewServer(withOpts(token)...)
 	mvmv1.RegisterMicroVMServer(grpcServer, s)
 

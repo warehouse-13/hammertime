@@ -39,7 +39,7 @@ func createCommand() *cli.Command {
 }
 
 func CreateFn(cfg *config.Config) error {
-	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress)
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
 	}

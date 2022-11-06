@@ -31,5 +31,5 @@ type Config struct {
 }
 
 type ClientConfig struct {
-	ClientBuilderFunc func(string) (client.FlintlockClient, error)
+	ClientBuilderFunc func(string, string) (client.FlintlockClient, error)
 }

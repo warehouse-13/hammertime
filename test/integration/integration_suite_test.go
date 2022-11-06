@@ -15,6 +15,7 @@ import (
 var (
 	cliBin  string
 	address string
+	token   = "secret"
 )
 
 func TestIntegration(t *testing.T) {
@@ -28,7 +29,7 @@ func TestIntegration(t *testing.T) {
 		var err error
 		cliBin, err = gexec.Build("github.com/warehouse-13/hammertime")
 		Expect(err).NotTo(HaveOccurred())
-
+		Expect(os.Setenv("AUTH_TOKEN", token)).To(Succeed())
 		serverBin, err = gexec.Build("github.com/warehouse-13/hammertime/test/fakeserver")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -68,7 +69,7 @@ type command struct {
 }
 
 func executeCommand(command command) *gexec.Session {
-	var args = []string{command.action, "--grpc-address", address}
+	var args = []string{command.action, "--grpc-address", address, "--token", token}
 	cmd := exec.Command(cliBin, append(args, command.args...)...)
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
