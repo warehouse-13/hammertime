@@ -70,25 +70,25 @@ as JSON so you can pipe to `jq` or whatever as you like.
 hammertime --help
 
 # create 'mvm0' in 'ns0' (take note of the UID after creation)
-hammertime create --token <token>
+hammertime create
 
 # get 'mvm0' in 'ns0'
-hammertime get --token <token>
+hammertime get
 
 # get just the state of 'mvm0' in 'ns0' see below
-hammertime get -s --token <token>
+hammertime get -s
 
 # get
-hammertime get -i <UUID> --token <token>
+hammertime get -i <UUID>
 
 # get all mvms in `ns0`
-hammertime list --namespace ns0 --token <token>
+hammertime list --namespace ns0
 
 # delete 'bar' from 'foo'
-hammertime delete --namespace foo --name --bar --token <token>
+hammertime delete --namespace foo --name bar
 
 # delete
-hammertime delete -i <UID> --token <token>
+hammertime delete -i <UID>
 ```
 
 The name and namespace are configurable, as is the GRPC address.

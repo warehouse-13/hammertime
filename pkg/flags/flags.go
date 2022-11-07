@@ -147,7 +147,7 @@ func WithBasicAuthFlag() WithFlagsFunc {
 			&cli.StringFlag{
 				Name:    "token",
 				Aliases: []string{"t"},
-				Usage:   "basic auth",
+				Usage:   "provide a token if basic auth is set on the server",
 			},
 		}
 	}
@@ -158,6 +158,7 @@ func WithBasicAuthFlag() WithFlagsFunc {
 func ParseFlags(cfg *config.Config) cli.BeforeFunc {
 	return func(ctx *cli.Context) error {
 		cfg.GRPCAddress = ctx.String("grpc-address")
+		cfg.Token = ctx.String("token")
 
 		cfg.MvmName = ctx.String("name")
 		cfg.MvmNamespace = ctx.String("namespace")
@@ -170,8 +171,6 @@ func ParseFlags(cfg *config.Config) cli.BeforeFunc {
 		cfg.Silent = ctx.Bool("quiet")
 
 		cfg.UUID = ctx.String("id")
-
-		cfg.Token = ctx.String("token")
 
 		return nil
 	}
