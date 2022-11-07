@@ -85,7 +85,7 @@ hammertime get -i <UUID>
 hammertime list --namespace ns0
 
 # delete 'bar' from 'foo'
-hammertime delete --namespace foo --name --bar
+hammertime delete --namespace foo --name bar
 
 # delete
 hammertime delete -i <UID>

@@ -24,10 +24,12 @@ type Config struct {
 	Silent bool
 	// UUID is the id of a created Microvm.
 	UUID string
+	// Token used for basic auth
+	Token string
 
 	ClientConfig
 }
 
 type ClientConfig struct {
-	ClientBuilderFunc func(string) (client.FlintlockClient, error)
+	ClientBuilderFunc func(string, string) (client.FlintlockClient, error)
 }

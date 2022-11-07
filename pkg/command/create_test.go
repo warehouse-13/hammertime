@@ -30,7 +30,7 @@ var _ = Describe("CreateFn", func() {
 
 	BeforeEach(func() {
 		mockClient = new(fakeclient.FakeFlintlockClient)
-		builderFunc := func(string) (client.FlintlockClient, error) {
+		builderFunc := func(string, string) (client.FlintlockClient, error) {
 			return mockClient, nil
 		}
 		cfg = &config.Config{

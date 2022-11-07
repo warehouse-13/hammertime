@@ -141,11 +141,24 @@ func WithQuietFlag() WithFlagsFunc {
 	}
 }
 
+func WithBasicAuthFlag() WithFlagsFunc {
+	return func() []cli.Flag {
+		return []cli.Flag{
+			&cli.StringFlag{
+				Name:    "token",
+				Aliases: []string{"t"},
+				Usage:   "provide a token if basic auth is set on the server",
+			},
+		}
+	}
+}
+
 // ParseFlags processes all flags on the CLI context and builds a config object
 // which will be used in the command's action.
 func ParseFlags(cfg *config.Config) cli.BeforeFunc {
 	return func(ctx *cli.Context) error {
 		cfg.GRPCAddress = ctx.String("grpc-address")
+		cfg.Token = ctx.String("token")
 
 		cfg.MvmName = ctx.String("name")
 		cfg.MvmNamespace = ctx.String("namespace")
