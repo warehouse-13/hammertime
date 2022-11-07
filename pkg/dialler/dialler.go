@@ -14,7 +14,7 @@ func New(address, basicAuthToken string) (*grpc.ClientConn, error) {
 
 	if basicAuthToken != "" {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
-			Basic(basicAuthToken),
+			basic(basicAuthToken),
 		))
 	}
 

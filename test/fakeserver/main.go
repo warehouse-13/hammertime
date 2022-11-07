@@ -41,53 +41,6 @@ func main() {
 	}
 }
 
-func withOpts(authToken string) []grpc.ServerOption {
-	if authToken != "" {
-		fmt.Println("basic authentication is enabled")
-
-		return []grpc.ServerOption{
-			grpc.StreamInterceptor(grpc_mw.ChainStreamServer(
-				grpc_auth.StreamServerInterceptor(basicAuthFunc(authToken)),
-			)),
-			grpc.UnaryInterceptor(grpc_mw.ChainUnaryServer(
-				grpc_auth.UnaryServerInterceptor(basicAuthFunc(authToken)),
-			)),
-		}
-	}
-
-	fmt.Println("authentication is DISABLED")
-
-	return []grpc.ServerOption{
-		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
-		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
-	}
-}
-
-func basicAuthFunc(setServerToken string) grpc_auth.AuthFunc {
-	return func(ctx context.Context) (context.Context, error) {
-		token, err := grpc_auth.AuthFromMD(ctx, "basic")
-		if err != nil {
-			return nil, fmt.Errorf("could not extract token from request header: %w", err)
-		}
-
-		if err := validateBasicAuthToken(token, setServerToken); err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
-		}
-
-		return ctx, nil
-	}
-}
-
-func validateBasicAuthToken(clientToken string, serverToken string) error {
-	data := base64.StdEncoding.EncodeToString([]byte(serverToken))
-
-	if strings.Compare(clientToken, string(data)) != 0 {
-		return errors.New("tokens do not match")
-	}
-
-	return nil
-}
-
 type fakeServer struct {
 	savedSpecs []*types.MicroVMSpec
 }
@@ -192,5 +145,52 @@ func (s *fakeServer) ListMicroVMsStream(
 	req *mvmv1.ListMicroVMsRequest,
 	streamServer mvmv1.MicroVM_ListMicroVMsStreamServer,
 ) error {
+	return nil
+}
+
+func withOpts(authToken string) []grpc.ServerOption {
+	if authToken != "" {
+		fmt.Println("basic authentication is enabled")
+
+		return []grpc.ServerOption{
+			grpc.StreamInterceptor(grpc_mw.ChainStreamServer(
+				grpc_auth.StreamServerInterceptor(basicAuthFunc(authToken)),
+			)),
+			grpc.UnaryInterceptor(grpc_mw.ChainUnaryServer(
+				grpc_auth.UnaryServerInterceptor(basicAuthFunc(authToken)),
+			)),
+		}
+	}
+
+	fmt.Println("authentication is DISABLED")
+
+	return []grpc.ServerOption{
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+	}
+}
+
+func basicAuthFunc(setServerToken string) grpc_auth.AuthFunc {
+	return func(ctx context.Context) (context.Context, error) {
+		token, err := grpc_auth.AuthFromMD(ctx, "basic")
+		if err != nil {
+			return nil, fmt.Errorf("could not extract token from request header: %w", err)
+		}
+
+		if err := validateBasicAuthToken(token, setServerToken); err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+		}
+
+		return ctx, nil
+	}
+}
+
+func validateBasicAuthToken(clientToken string, serverToken string) error {
+	data := base64.StdEncoding.EncodeToString([]byte(serverToken))
+
+	if strings.Compare(clientToken, string(data)) != 0 {
+		return errors.New("tokens do not match")
+	}
+
 	return nil
 }

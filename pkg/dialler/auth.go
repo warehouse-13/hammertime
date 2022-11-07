@@ -9,7 +9,7 @@ type basicAuth struct {
 	token string
 }
 
-func Basic(t string) basicAuth {
+func basic(t string) basicAuth {
 	return basicAuth{token: t}
 }
 
