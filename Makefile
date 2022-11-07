@@ -1,6 +1,11 @@
 BIN_DIR := bin
 HT_CMD := .
 
+BUILD_DATE := $(shell date +%Y-%m-%dT%H:%M:%SZ)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+VERSION := $(shell git describe --tags --abbrev=0)
+VERSION_PKG := github.com/warehouse-13/hammertime/pkg/version
+
 ##@ Build
 
 .PHONY: build
@@ -32,12 +37,12 @@ mock: ## Generate mocks
 
 .PHONY: release
 release: ## Cross compile bins for linux, windows, mac
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-linux-amd64 $(HT_CMD)
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-linux-arm64 $(HT_CMD)
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-windows-amd64 $(HT_CMD)
-	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-windows-arm64 $(HT_CMD)
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-darwin-amd64 $(HT_CMD)
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-darwin-arm64 $(HT_CMD)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-linux-amd64 -ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(VERSION_PKG).CommitHash=$(GIT_COMMIT)" $(HT_CMD)
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-linux-arm64 -ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(VERSION_PKG).CommitHash=$(GIT_COMMIT)" $(HT_CMD)
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-windows-amd64 -ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(VERSION_PKG).CommitHash=$(GIT_COMMIT)" $(HT_CMD)
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-windows-arm64 -ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(VERSION_PKG).CommitHash=$(GIT_COMMIT)" $(HT_CMD)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o $(BIN_DIR)/hammertime-darwin-amd64 -ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(VERSION_PKG).CommitHash=$(GIT_COMMIT)" $(HT_CMD)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o $(BIN_DIR)/hammertime-darwin-arm64 -ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(VERSION_PKG).CommitHash=$(GIT_COMMIT)" $(HT_CMD)
 
 .PHONY: help
 help:  ## Display this help. Thanks to https://www.thapaliya.com/en/writings/well-documented-makefiles/

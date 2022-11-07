@@ -4,6 +4,7 @@ run:
     allow-parallel-runners: true
     skip-dirs:
       - "./*/fake*"
+      - "./pkg/version"
 
 linters-settings:
   funlen:
@@ -65,6 +66,9 @@ issues:
   - source: "https://"
     linters:
     - lll
+  - path: pkg/version/
+    linters:
+    - gochecknoglobals
   - path: pkg/defaults/
     linters:
     - lll

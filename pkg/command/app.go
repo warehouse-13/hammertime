@@ -29,5 +29,6 @@ func commands() []*cli.Command {
 		getCommand(),
 		listCommand(),
 		deleteCommand(),
+		versionCommand(),
 	}
 }
