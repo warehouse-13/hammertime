@@ -1,7 +1,6 @@
 package dialler
 
 import (
-	"github.com/warehouse-13/hammertime/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -16,7 +15,7 @@ func New(address, basicAuthToken string) (*grpc.ClientConn, error) {
 
 	if basicAuthToken != "" {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
-			auth.Basic(basicAuthToken),
+			Basic(basicAuthToken),
 		))
 	}
 
