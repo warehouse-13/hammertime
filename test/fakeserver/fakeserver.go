@@ -1,4 +1,4 @@
-package main
+package fakeserver
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 
 	grpc_mw "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -23,29 +22,61 @@ import (
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
-func main() {
-	l, err := net.Listen("tcp", "localhost:9090")
+// Cleanup implements a function to tear down any fake server resources.
+type Cleanup func() error
+
+func New() *FakeServer {
+	return &FakeServer{}
+}
+
+type FakeServer struct {
+	savedSpecs []*types.MicroVMSpec
+	cleanup    Cleanup
+}
+
+// Start creates a new real server to respond to gRPC requests from the client.
+// Using a buffcon would be better, but this only works if you are creating
+// the client programatically in the tests. In our case we are passing the server
+// address as a flag to the program. The client therefore errors because it
+// does not recognise the buffer address as a valid target.
+// The fake server has additional methods which allow for manipulation of data.
+func (s *FakeServer) Start(token string) string {
+	l, err := net.Listen("tcp", ":")
 	if err != nil {
-		fmt.Println("Failed to listen on localhost:9090", err)
-		os.Exit(1)
+		fmt.Println("Failed to start fake listener", err)
 	}
 
-	s := &fakeServer{}
-	token := os.Getenv("AUTH_TOKEN")
 	grpcServer := grpc.NewServer(withOpts(token)...)
 	mvmv1.RegisterMicroVMServer(grpcServer, s)
 
-	if err := grpcServer.Serve(l); err != nil {
-		fmt.Println("Failed to start gRPC server", err)
-		os.Exit(1)
+	go func() {
+		if err := grpcServer.Serve(l); err != nil {
+			fmt.Println("Failed to start fake gRPC server", err)
+		}
+	}()
+
+	s.cleanup = func() error {
+		if err := l.Close(); err != nil {
+			return err
+		}
+
+		grpcServer.Stop()
+
+		return nil
 	}
+
+	return l.Addr().String()
 }
 
-type fakeServer struct {
-	savedSpecs []*types.MicroVMSpec
+func (s *FakeServer) Stop() error {
+	if s.cleanup != nil {
+		return s.cleanup()
+	}
+
+	return nil
 }
 
-func (s *fakeServer) CreateMicroVM(
+func (s *FakeServer) CreateMicroVM(
 	ctx context.Context,
 	req *mvmv1.CreateMicroVMRequest,
 ) (*mvmv1.CreateMicroVMResponse, error) {
@@ -69,7 +100,7 @@ func (s *fakeServer) CreateMicroVM(
 	}, nil
 }
 
-func (s *fakeServer) DeleteMicroVM(ctx context.Context, req *mvmv1.DeleteMicroVMRequest) (*emptypb.Empty, error) {
+func (s *FakeServer) DeleteMicroVM(ctx context.Context, req *mvmv1.DeleteMicroVMRequest) (*emptypb.Empty, error) {
 	for i, spec := range s.savedSpecs {
 		if *spec.Uid == req.Uid {
 			s.savedSpecs[i] = s.savedSpecs[len(s.savedSpecs)-1]
@@ -81,7 +112,7 @@ func (s *fakeServer) DeleteMicroVM(ctx context.Context, req *mvmv1.DeleteMicroVM
 	return &emptypb.Empty{}, nil
 }
 
-func (s *fakeServer) GetMicroVM(ctx context.Context, req *mvmv1.GetMicroVMRequest) (*mvmv1.GetMicroVMResponse, error) {
+func (s *FakeServer) GetMicroVM(ctx context.Context, req *mvmv1.GetMicroVMRequest) (*mvmv1.GetMicroVMResponse, error) {
 	var requestSpec *types.MicroVMSpec
 
 	for _, spec := range s.savedSpecs {
@@ -105,7 +136,7 @@ func (s *fakeServer) GetMicroVM(ctx context.Context, req *mvmv1.GetMicroVMReques
 	}, nil
 }
 
-func (s *fakeServer) ListMicroVMs(
+func (s *FakeServer) ListMicroVMs(
 	ctx context.Context,
 	req *mvmv1.ListMicroVMsRequest,
 ) (*mvmv1.ListMicroVMsResponse, error) {
@@ -141,7 +172,7 @@ func shouldReturn(spec *types.MicroVMSpec, name *string, namespace string) bool 
 	return namespace == ""
 }
 
-func (s *fakeServer) ListMicroVMsStream(
+func (s *FakeServer) ListMicroVMsStream(
 	req *mvmv1.ListMicroVMsRequest,
 	streamServer mvmv1.MicroVM_ListMicroVMsStreamServer,
 ) error {
@@ -150,8 +181,6 @@ func (s *fakeServer) ListMicroVMsStream(
 
 func withOpts(authToken string) []grpc.ServerOption {
 	if authToken != "" {
-		fmt.Println("basic authentication is enabled")
-
 		return []grpc.ServerOption{
 			grpc.StreamInterceptor(grpc_mw.ChainStreamServer(
 				grpc_auth.StreamServerInterceptor(basicAuthFunc(authToken)),
@@ -161,8 +190,6 @@ func withOpts(authToken string) []grpc.ServerOption {
 			)),
 		}
 	}
-
-	fmt.Println("authentication is DISABLED")
 
 	return []grpc.ServerOption{
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),

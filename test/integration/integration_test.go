@@ -3,7 +3,6 @@ package integration_test
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -176,41 +175,6 @@ var _ = Describe("Integration", func() {
 		Expect(listAll()).To(Equal(0))
 	})
 })
-
-func create(opts ...string) *gexec.Session {
-	args := []string{"create", "--grpc-address", address, "--token", token}
-	args = append(args, opts...)
-
-	return runCmd(exec.Command(cliBin, args...))
-}
-
-func get(opts ...string) *gexec.Session {
-	args := []string{"get", "--grpc-address", address, "--token", token}
-	args = append(args, opts...)
-
-	return runCmd(exec.Command(cliBin, args...))
-}
-
-func list(opts ...string) *gexec.Session {
-	args := []string{"list", "--grpc-address", address, "--token", token}
-	args = append(args, opts...)
-
-	return runCmd(exec.Command(cliBin, args...))
-}
-
-func delete(opts ...string) *gexec.Session {
-	args := []string{"delete", "--grpc-address", address, "--token", token}
-	args = append(args, opts...)
-
-	return runCmd(exec.Command(cliBin, args...))
-}
-
-func runCmd(cmd *exec.Cmd) *gexec.Session {
-	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-
-	return session
-}
 
 func createALotOfMVMs(namespace, name string) {
 	for i := 0; i < 5; i++ {
