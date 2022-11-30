@@ -76,6 +76,11 @@ func (s *FakeServer) Stop() error {
 	return nil
 }
 
+// Load will overwrite the microvm array. Useful for testing batches.
+func (s *FakeServer) Load(microvms ...*types.MicroVMSpec) {
+	s.savedSpecs = microvms
+}
+
 func (s *FakeServer) CreateMicroVM(
 	ctx context.Context,
 	req *mvmv1.CreateMicroVMRequest,
@@ -101,13 +106,15 @@ func (s *FakeServer) CreateMicroVM(
 }
 
 func (s *FakeServer) DeleteMicroVM(ctx context.Context, req *mvmv1.DeleteMicroVMRequest) (*emptypb.Empty, error) {
-	for i, spec := range s.savedSpecs {
-		if *spec.Uid == req.Uid {
-			s.savedSpecs[i] = s.savedSpecs[len(s.savedSpecs)-1]
+	if len(s.savedSpecs) > 0 {
+		for i, spec := range s.savedSpecs {
+			if *spec.Uid == req.Uid {
+				s.savedSpecs[i] = s.savedSpecs[len(s.savedSpecs)-1]
+			}
 		}
-	}
 
-	s.savedSpecs = s.savedSpecs[:len(s.savedSpecs)-1]
+		s.savedSpecs = s.savedSpecs[:len(s.savedSpecs)-1]
+	}
 
 	return &emptypb.Empty{}, nil
 }
