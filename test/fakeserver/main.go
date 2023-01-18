@@ -19,8 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/warehouse-13/hammertime/pkg/utils"
+	"k8s.io/utils/pointer"
 )
 
 func main() {
@@ -56,7 +55,7 @@ func (s *fakeServer) CreateMicroVM(
 		return nil, err
 	}
 
-	spec.Uid = utils.PointyString(uid.String())
+	spec.Uid = pointer.String(uid.String())
 
 	s.savedSpecs = append(s.savedSpecs, spec)
 

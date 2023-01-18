@@ -7,9 +7,9 @@ import (
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"k8s.io/utils/pointer"
 
 	"github.com/warehouse-13/hammertime/pkg/dialler"
-	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -65,7 +65,7 @@ func (c *Client) Get(uid string) (*v1alpha1.GetMicroVMResponse, error) {
 func (c *Client) List(name, ns string) (*v1alpha1.ListMicroVMsResponse, error) {
 	listReq := v1alpha1.ListMicroVMsRequest{
 		Namespace: ns,
-		Name:      utils.PointyString(name),
+		Name:      pointer.String(name),
 	}
 
 	return c.ListMicroVMs(context.Background(), &listReq)
