@@ -12,7 +12,6 @@ import (
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
-// TODO test #54.
 func CreateUserData(name, sshPath string) (string, error) {
 	defaultUser := userdata.User{
 		Name: "root",
@@ -51,7 +50,6 @@ func CreateUserData(name, sshPath string) (string, error) {
 	return base64.StdEncoding.EncodeToString(dataWithHeader), nil
 }
 
-// TODO test #54.
 func CreateMetadata(name, ns string) (string, error) {
 	metadata := instance.New(
 		instance.WithInstanceID(fmt.Sprintf("%s/%s", ns, name)),
