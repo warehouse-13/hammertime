@@ -31,7 +31,6 @@ func ProcessFile(file string) (string, string, string, error) {
 	return uid, name, namespace, nil
 }
 
-// TODO test #54.
 func LoadSpecFromFile(file string) (*types.MicroVMSpec, error) {
 	dat, err := ioutil.ReadFile(file)
 	if err != nil {

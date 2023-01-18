@@ -2,99 +2,171 @@ package utils_test
 
 import (
 	"encoding/json"
+	"io/fs"
 	"io/ioutil"
 	"os"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
-var _ = Describe("ProcessFile", func() {
+func Test_ProcessFile(t *testing.T) {
+	g := NewWithT(t)
+
+	tempFile, err := ioutil.TempFile("", "utils_test")
+	g.Expect(err).NotTo(HaveOccurred())
+
+	t.Cleanup(func() {
+		g.Expect(os.RemoveAll(tempFile.Name())).To(Succeed())
+	})
+
 	var (
-		tempFile        *os.File
-		uid             *string
-		name, namespace string
+		testName = "foo"
+		testNs   = "bar"
+		testUid  = "baz"
 	)
 
-	JustBeforeEach(func() {
-		var err error
-		tempFile, err = ioutil.TempFile("", "utils_test")
-		Expect(err).NotTo(HaveOccurred())
+	type testData struct {
+		name string
+		ns   string
+		uid  *string
+	}
 
-		spec := &types.MicroVMSpec{
-			Id:        name,
-			Namespace: namespace,
-			Uid:       uid,
-		}
+	tt := []struct {
+		test     string
+		filename string
+		input    testData
+		expected func(*WithT, testData, testData, error)
+	}{
+		{
+			test:     "when all values are set in the file, returns all",
+			filename: tempFile.Name(),
+			input: testData{
+				name: testName,
+				ns:   testNs,
+				uid:  &testUid,
+			},
+			expected: func(g *WithT, in, out testData, err error) {
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(out.name).To(Equal(in.name))
+				g.Expect(out.ns).To(Equal(in.ns))
+				g.Expect(out.uid).To(Equal(in.uid))
+			},
+		},
+		{
+			test:     "when just name and ns are set in the file, returns name and ns",
+			filename: tempFile.Name(),
+			input: testData{
+				name: testName,
+				ns:   testNs,
+				uid:  utils.PointyString(""),
+			},
+			expected: func(g *WithT, in, out testData, err error) {
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(out.name).To(Equal(in.name))
+				g.Expect(out.ns).To(Equal(in.ns))
+				g.Expect(out.uid).To(Equal(in.uid))
+			},
+		},
+		{
+			test:     "when no values are set in the file, returns an error",
+			filename: tempFile.Name(),
+			input:    testData{},
+			expected: func(g *WithT, in, out testData, err error) {
+				g.Expect(err).To(MatchError(ContainSubstring("required")))
+			},
+		},
+		{
+			test:     "when the file fails to load, returns an error",
+			filename: "noexist",
+			input:    testData{},
+			expected: func(g *WithT, in, out testData, err error) {
+				g.Expect(err).To(BeAssignableToTypeOf(&fs.PathError{}))
+			},
+		},
+	}
 
-		dat, err := json.Marshal(spec)
-		Expect(err).NotTo(HaveOccurred())
+	for _, tc := range tt {
+		t.Run(tc.test, func(t *testing.T) {
+			spec := &types.MicroVMSpec{
+				Id:        tc.input.name,
+				Namespace: tc.input.ns,
+				Uid:       tc.input.uid,
+			}
 
-		Expect(ioutil.WriteFile(tempFile.Name(), dat, 0755)).To(Succeed())
+			dat, err := json.Marshal(spec)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			g.Expect(ioutil.WriteFile(tempFile.Name(), dat, 0755)).To(Succeed())
+
+			outUid, outN, outNs, err := utils.ProcessFile(tc.filename)
+
+			out := testData{outN, outNs, &outUid}
+
+			tc.expected(g, tc.input, out, err)
+		})
+	}
+}
+
+func Test_LoadSpecFromFile(t *testing.T) {
+	g := NewWithT(t)
+
+	tempFile, err := ioutil.TempFile("", "utils_test")
+	g.Expect(err).NotTo(HaveOccurred())
+
+	t.Cleanup(func() {
+		g.Expect(os.RemoveAll(tempFile.Name())).To(Succeed())
 	})
 
-	AfterEach(func() {
-		Expect(os.RemoveAll(tempFile.Name())).To(Succeed())
-	})
+	type testData struct {
+		name string
+		ns   string
+		uid  *string
+	}
 
-	Context("everything is set in the file", func() {
-		BeforeEach(func() {
-			name = "foo"
-			namespace = "bar"
-			uid = utils.PointyString("baz")
-		})
+	tt := []struct {
+		test     string
+		filename string
+		input    string
+		expected func(*WithT, *types.MicroVMSpec, error)
+	}{
+		{
+			test:     "happy path",
+			filename: tempFile.Name(),
+			input:    `{"name": "bar"}`,
+			expected: func(g *WithT, out *types.MicroVMSpec, err error) {
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(out).To(BeAssignableToTypeOf(&types.MicroVMSpec{}))
+			},
+		},
+		{
+			test:     "if the file contains non-json data, returns an error",
+			filename: tempFile.Name(),
+			input:    `foo`,
+			expected: func(g *WithT, out *types.MicroVMSpec, err error) {
+				g.Expect(err).To(HaveOccurred())
+				g.Expect(out).To(BeNil())
+			},
+		},
+		{
+			test:     "if the file cannot be loaded, returns an error",
+			filename: "noexist",
+			expected: func(g *WithT, out *types.MicroVMSpec, err error) {
+				g.Expect(err).To(HaveOccurred())
+				g.Expect(out).To(BeNil())
+			},
+		},
+	}
 
-		It("returns uid, name and namespace", func() {
-			uid, name, namespace, err := utils.ProcessFile(tempFile.Name())
-			Expect(err).NotTo(HaveOccurred())
-			Expect(name).To(Equal("foo"))
-			Expect(namespace).To(Equal("bar"))
-			Expect(uid).To(Equal("baz"))
-		})
-	})
+	for _, tc := range tt {
+		t.Run(tc.test, func(t *testing.T) {
+			g.Expect(ioutil.WriteFile(tempFile.Name(), []byte(tc.input), 0755)).To(Succeed())
 
-	Context("uid is not found in file", func() {
-		BeforeEach(func() {
-			name = "foo"
-			namespace = "bar"
-			uid = nil
+			out, err := utils.LoadSpecFromFile(tc.filename)
+			tc.expected(g, out, err)
 		})
-
-		It("returns name and namespace", func() {
-			uid, name, namespace, err := utils.ProcessFile(tempFile.Name())
-			Expect(err).NotTo(HaveOccurred())
-			Expect(name).To(Equal("foo"))
-			Expect(namespace).To(Equal("bar"))
-			Expect(uid).To(Equal(""))
-		})
-	})
-
-	Context("loading the file fails", func() {
-		It("returns an error", func() {
-			uid, name, namespace, err := utils.ProcessFile("noexist")
-			Expect(err).To(HaveOccurred())
-			Expect(name).To(Equal(""))
-			Expect(namespace).To(Equal(""))
-			Expect(uid).To(Equal(""))
-		})
-	})
-
-	Context("no values are found in the file", func() {
-		BeforeEach(func() {
-			name = ""
-			namespace = ""
-			uid = nil
-		})
-
-		It("returns an error", func() {
-			uid, name, namespace, err := utils.ProcessFile(tempFile.Name())
-			Expect(err).To(HaveOccurred())
-			Expect(name).To(Equal(""))
-			Expect(namespace).To(Equal(""))
-			Expect(uid).To(Equal(""))
-		})
-	})
-})
+	}
+}
