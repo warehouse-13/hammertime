@@ -32,7 +32,6 @@ func listCommand() *cli.Command {
 	}
 }
 
-// TODO: add tests as part of #54.
 func ListFn(cfg *config.Config) error {
 	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
