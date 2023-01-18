@@ -8,10 +8,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 
-	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/client/fakeclient"
 	"github.com/warehouse-13/hammertime/pkg/command"
 	"github.com/warehouse-13/hammertime/pkg/config"
@@ -34,7 +32,7 @@ func Test_CreateFn(t *testing.T) {
 		MvmNamespace: testNamespace,
 	}
 
-	mockClient.CreateReturns(response(testName, testNamespace), nil)
+	mockClient.CreateReturns(createResponse(testName, testNamespace), nil)
 	g.Expect(command.CreateFn(cfg)).To(Succeed())
 
 	input := mockClient.CreateArgsForCall(0)
@@ -104,7 +102,7 @@ func Test_CreateFn_withFile(t *testing.T) {
 		JSONFile:     tempFile.Name(),
 	}
 
-	mockClient.CreateReturns(response(testName, testNamespace), nil)
+	mockClient.CreateReturns(createResponse(testName, testNamespace), nil)
 	g.Expect(command.CreateFn(cfg)).To(Succeed())
 
 	input := mockClient.CreateArgsForCall(0)
@@ -140,21 +138,4 @@ func Test_CreateFn_withFile_fails(t *testing.T) {
 	}
 
 	g.Expect(command.CreateFn(cfg)).NotTo(Succeed())
-}
-
-func testClient(c client.FlintlockClient, err error) func(string, string) (client.FlintlockClient, error) {
-	return func(string, string) (client.FlintlockClient, error) {
-		return c, err
-	}
-}
-
-func response(name, namespace string) *v1alpha1.CreateMicroVMResponse {
-	return &v1alpha1.CreateMicroVMResponse{
-		Microvm: &types.MicroVM{
-			Spec: &types.MicroVMSpec{
-				Id:        name,
-				Namespace: namespace,
-			},
-		},
-	}
 }
