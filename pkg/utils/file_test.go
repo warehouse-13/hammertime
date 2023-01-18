@@ -9,6 +9,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
+	"k8s.io/utils/pointer"
 
 	"github.com/warehouse-13/hammertime/pkg/utils"
 )
@@ -62,7 +63,7 @@ func Test_ProcessFile(t *testing.T) {
 			input: testData{
 				name: testName,
 				ns:   testNs,
-				uid:  utils.PointyString(""),
+				uid:  pointer.String(""),
 			},
 			expected: func(g *WithT, in, out testData, err error) {
 				g.Expect(err).NotTo(HaveOccurred())

@@ -2,8 +2,7 @@ package defaults
 
 import (
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
-
-	"github.com/warehouse-13/hammertime/pkg/utils"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -29,14 +28,14 @@ func BaseMicroVM() *types.MicroVMSpec {
 		MemoryInMb: 2048, //nolint: gomnd // we don't care
 		Kernel: &types.Kernel{
 			Image:            KernelImage,
-			Filename:         utils.PointyString("boot/vmlinux"),
+			Filename:         pointer.String("boot/vmlinux"),
 			AddNetworkConfig: true,
 		},
 		RootVolume: &types.Volume{
 			Id:         "root",
 			IsReadOnly: false,
 			Source: &types.VolumeSource{
-				ContainerSource: utils.PointyString(CloudImage),
+				ContainerSource: pointer.String(CloudImage),
 			},
 		},
 		Interfaces: []*types.NetworkInterface{
