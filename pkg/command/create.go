@@ -1,6 +1,8 @@
 package command
 
 import (
+	"os"
+
 	"github.com/urfave/cli/v2"
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 
@@ -19,6 +21,8 @@ func createCommand() *cli.Command {
 		},
 	}
 
+	w := utils.NewWriter(os.Stdout)
+
 	return &cli.Command{
 		Name:    "create",
 		Usage:   "create a new microvm",
@@ -33,12 +37,12 @@ func createCommand() *cli.Command {
 			flags.WithBasicAuthFlag(),
 		),
 		Action: func(c *cli.Context) error {
-			return CreateFn(cfg)
+			return CreateFn(w, cfg)
 		},
 	}
 }
 
-func CreateFn(cfg *config.Config) error {
+func CreateFn(w utils.Writer, cfg *config.Config) error {
 	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
@@ -69,7 +73,7 @@ func CreateFn(cfg *config.Config) error {
 		return nil
 	}
 
-	return utils.PrettyPrint(res)
+	return w.PrettyPrint(res)
 }
 
 func newMicroVM(name, namespace, sshPath string) (*types.MicroVMSpec, error) {
