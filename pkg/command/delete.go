@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/urfave/cli/v2"
 
@@ -18,6 +19,8 @@ func deleteCommand() *cli.Command {
 		},
 	}
 
+	w := utils.NewWriter(os.Stdout)
+
 	return &cli.Command{
 		Name:    "delete",
 		Usage:   "delete a microvmd",
@@ -33,13 +36,12 @@ func deleteCommand() *cli.Command {
 			flags.WithBasicAuthFlag(),
 		),
 		Action: func(c *cli.Context) error {
-			return DeleteFn(cfg)
+			return DeleteFn(w, cfg)
 		},
 	}
 }
 
-// TODO: add tests as part of #54.
-func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring this file
+func DeleteFn(w utils.Writer, cfg *config.Config) error { //nolint: cyclop // we are refactoring this file
 	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
@@ -66,7 +68,7 @@ func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring
 			return nil
 		}
 
-		return utils.PrettyPrint(res)
+		return w.PrettyPrint(res)
 	}
 
 	if !cfg.DeleteAll {
@@ -82,10 +84,10 @@ func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring
 
 	if utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) && !cfg.DeleteAll {
 		if len(list.Microvm) > 1 {
-			fmt.Printf("%d MicroVMs found under %s/%s:\n", len(list.Microvm), cfg.MvmNamespace, cfg.MvmName)
+			w.Printf("%d MicroVMs found under %s/%s:\n", len(list.Microvm), cfg.MvmNamespace, cfg.MvmName)
 
 			for _, mvm := range list.Microvm {
-				fmt.Println(*mvm.Spec.Uid)
+				w.Print(*mvm.Spec.Uid)
 			}
 
 			return nil
@@ -99,7 +101,7 @@ func DeleteFn(cfg *config.Config) error { //nolint: cyclop // we are refactoring
 		}
 
 		if !cfg.Silent {
-			if err := utils.PrettyPrint(res); err != nil {
+			if err := w.PrettyPrint(res); err != nil {
 				return err
 			}
 		}
