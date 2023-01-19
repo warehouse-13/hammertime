@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 	"k8s.io/utils/pointer"
 
@@ -46,10 +45,10 @@ func Test_GetFn(t *testing.T) {
 	inUid := mockClient.GetArgsForCall(0)
 	g.Expect(inUid).To(Equal(testUid))
 
-	out := &v1alpha1.GetMicroVMResponse{}
+	out := &types.MicroVM{}
 	g.Expect(json.Unmarshal(buf.Bytes(), out)).To(Succeed())
 
-	g.Expect(out.Microvm).To(Equal(resp.Microvm))
+	g.Expect(out).To(Equal(resp.Microvm))
 }
 
 func Test_GetFn_state(t *testing.T) {
@@ -220,10 +219,10 @@ func Test_GetFn_withFile(t *testing.T) {
 	inUid := mockClient.GetArgsForCall(0)
 	g.Expect(inUid).To(Equal(testUid))
 
-	out := &v1alpha1.GetMicroVMResponse{}
+	out := &types.MicroVM{}
 	g.Expect(json.Unmarshal(buf.Bytes(), out)).To(Succeed())
 
-	g.Expect(out.Microvm).To(Equal(resp.Microvm))
+	g.Expect(out).To(Equal(resp.Microvm))
 }
 
 func Test_GetFn_withFile_fails(t *testing.T) {
