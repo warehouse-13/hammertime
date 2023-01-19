@@ -11,6 +11,7 @@ import (
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"k8s.io/utils/pointer"
 )
 
@@ -47,6 +48,10 @@ func createResponse(name, namespace string) *v1alpha1.CreateMicroVMResponse {
 			},
 		},
 	}
+}
+
+func deleteResponse() *emptypb.Empty {
+	return &emptypb.Empty{}
 }
 
 func getResponse(name, namespace, uid string) *v1alpha1.GetMicroVMResponse {
