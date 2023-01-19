@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v2"
+	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
 	"github.com/warehouse-13/hammertime/pkg/config"
@@ -41,13 +42,6 @@ func getCommand() *cli.Command {
 }
 
 func GetFn(w utils.Writer, cfg *config.Config) error {
-	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
-	if err != nil {
-		return err
-	}
-
-	defer client.Close()
-
 	if utils.IsSet(cfg.JSONFile) {
 		var err error
 
@@ -57,45 +51,55 @@ func GetFn(w utils.Writer, cfg *config.Config) error {
 		}
 	}
 
-	if utils.IsSet(cfg.UUID) {
-		res, err := client.Get(cfg.UUID)
-		if err != nil {
-			return err
-		}
-
-		if cfg.State {
-			w.Print(res.Microvm.Status.State)
-
-			return nil
-		}
-
-		return w.PrettyPrint(res)
-	}
-
-	res, err := client.List(cfg.MvmName, cfg.MvmNamespace)
+	res, err := findMicrovm(cfg)
 	if err != nil {
 		return err
 	}
 
-	if len(res.Microvm) > 1 {
-		w.Printf("%d MicroVMs found under %s/%s:\n", len(res.Microvm), cfg.MvmNamespace, cfg.MvmName)
+	if len(res) == 1 {
+		if cfg.State {
+			w.Print(res[0].Status.State)
 
-		for _, mvm := range res.Microvm {
+			return nil
+		}
+
+		return w.PrettyPrint(res[0])
+	}
+
+	if len(res) > 1 {
+		w.Printf("%d MicroVMs found under %s/%s:\n", len(res), cfg.MvmNamespace, cfg.MvmName)
+
+		for _, mvm := range res {
 			w.Print(*mvm.Spec.Uid)
 		}
 
 		return nil
 	}
 
-	if len(res.Microvm) == 1 {
-		if cfg.State {
-			w.Print(res.Microvm[0].Status.State)
+	return fmt.Errorf("MicroVM %s/%s not found", cfg.MvmNamespace, cfg.MvmName)
+}
 
-			return nil
-		}
-
-		return w.PrettyPrint(res.Microvm[0])
+func findMicrovm(cfg *config.Config) ([]*types.MicroVM, error) {
+	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
+	if err != nil {
+		return nil, err
 	}
 
-	return fmt.Errorf("MicroVM %s/%s not found", cfg.MvmNamespace, cfg.MvmName)
+	defer client.Close()
+
+	if utils.IsSet(cfg.UUID) {
+		res, err := client.Get(cfg.UUID)
+		if err != nil {
+			return nil, err
+		}
+
+		return []*types.MicroVM{res.Microvm}, nil
+	}
+
+	res, err := client.List(cfg.MvmName, cfg.MvmNamespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Microvm, nil
 }
