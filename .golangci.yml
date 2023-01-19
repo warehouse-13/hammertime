@@ -43,6 +43,7 @@ linters-settings:
     - vm
     - ns
     - ip
+    - w
 
 issues:
   max-same-issues: 0

@@ -3,7 +3,7 @@ package microvm
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/instance"
 	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/userdata"
@@ -66,7 +66,7 @@ func CreateMetadata(name, ns string) (string, error) {
 }
 
 func getKeyFromPath(path string) (string, error) {
-	key, err := ioutil.ReadFile(path)
+	key, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

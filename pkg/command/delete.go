@@ -97,7 +97,7 @@ func DeleteFn(w utils.Writer, cfg *config.Config) error {
 	return nil
 }
 
-func deleteMvm(w utils.Writer, c client.FlintlockClient, u string, s bool) error {
+func deleteMvm(w utils.Writer, c client.FlintlockClient, u string, s bool) error { //nolint: varnamelen // acceptable
 	res, err := c.Delete(u)
 	if err != nil {
 		return err
