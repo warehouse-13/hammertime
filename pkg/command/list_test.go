@@ -28,7 +28,7 @@ func Test_ListFn(t *testing.T) {
 		MvmNamespace: testNamespace,
 	}
 
-	mockClient.ListReturns(listResponse(testName, testNamespace), nil)
+	mockClient.ListReturns(listResponse(1, testName, testNamespace), nil)
 	g.Expect(command.ListFn(cfg)).To(Succeed())
 
 	inName, inNamespace := mockClient.ListArgsForCall(0)

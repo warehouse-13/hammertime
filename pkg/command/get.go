@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/urfave/cli/v2"
 
@@ -18,6 +19,8 @@ func getCommand() *cli.Command {
 		},
 	}
 
+	w := utils.NewWriter(os.Stdout)
+
 	return &cli.Command{
 		Name:    "get",
 		Usage:   "get an existing microvm",
@@ -32,13 +35,12 @@ func getCommand() *cli.Command {
 			flags.WithBasicAuthFlag(),
 		),
 		Action: func(c *cli.Context) error {
-			return GetFn(cfg)
+			return GetFn(w, cfg)
 		},
 	}
 }
 
-// TODO: add tests as part of #54.
-func GetFn(cfg *config.Config) error {
+func GetFn(w utils.Writer, cfg *config.Config) error {
 	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
@@ -62,12 +64,12 @@ func GetFn(cfg *config.Config) error {
 		}
 
 		if cfg.State {
-			fmt.Println(res.Microvm.Status.State)
+			w.Print(res.Microvm.Status.State)
 
 			return nil
 		}
 
-		return utils.PrettyPrint(res)
+		return w.PrettyPrint(res)
 	}
 
 	res, err := client.List(cfg.MvmName, cfg.MvmNamespace)
@@ -76,10 +78,10 @@ func GetFn(cfg *config.Config) error {
 	}
 
 	if len(res.Microvm) > 1 {
-		fmt.Printf("%d MicroVMs found under %s/%s:\n", len(res.Microvm), cfg.MvmNamespace, cfg.MvmName)
+		w.Printf("%d MicroVMs found under %s/%s:\n", len(res.Microvm), cfg.MvmNamespace, cfg.MvmName)
 
 		for _, mvm := range res.Microvm {
-			fmt.Println(*mvm.Spec.Uid)
+			w.Print(*mvm.Spec.Uid)
 		}
 
 		return nil
@@ -87,12 +89,12 @@ func GetFn(cfg *config.Config) error {
 
 	if len(res.Microvm) == 1 {
 		if cfg.State {
-			fmt.Println(res.Microvm[0].Status.State)
+			w.Print(res.Microvm[0].Status.State)
 
 			return nil
 		}
 
-		return utils.PrettyPrint(res.Microvm[0])
+		return w.PrettyPrint(res.Microvm[0])
 	}
 
 	return fmt.Errorf("MicroVM %s/%s not found", cfg.MvmNamespace, cfg.MvmName)
