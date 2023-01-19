@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/weaveworks-liquidmetal/flintlock/api/types"
 )
@@ -32,7 +32,7 @@ func ProcessFile(file string) (string, string, string, error) {
 }
 
 func LoadSpecFromFile(file string) (*types.MicroVMSpec, error) {
-	dat, err := ioutil.ReadFile(file)
+	dat, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
