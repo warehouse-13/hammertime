@@ -22,12 +22,12 @@ lint: ## Lint code
 test: int unit
 
 .PHONY: int
-int: ## Run integration tests
+int: ## Run integration tests (ginkgo)
 	ginkgo -r test/
 
 .PHONY: unit
 unit: ## Run unit tests
-	ginkgo -r pkg/
+	go test ./pkg/...
 
 .PHONY: mock
 mock: ## Generate mocks

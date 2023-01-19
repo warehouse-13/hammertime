@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	"github.com/warehouse-13/safety"
 )
 
 var (
@@ -20,28 +21,20 @@ var (
 
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	var (
-		serverBin     string
-		serverSession *gexec.Session
-	)
+	var fakeserver *safety.FakeServer
 
 	BeforeSuite(func() {
 		var err error
 		cliBin, err = gexec.Build("github.com/warehouse-13/hammertime")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.Setenv("AUTH_TOKEN", token)).To(Succeed())
-		serverBin, err = gexec.Build("github.com/warehouse-13/hammertime/test/fakeserver")
-		Expect(err).NotTo(HaveOccurred())
 
 		if remote_test_server := os.Getenv("TEST_SERVER"); remote_test_server != "" {
 			address = remote_test_server
 			fmt.Fprintf(GinkgoWriter, "Using real Flintlock server at %s: tests may take a little longer", address)
 		} else {
-			serverCmd := exec.Command(serverBin)
-			serverSession, err = gexec.Start(serverCmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-
-			address = "127.0.0.1:9090"
+			fakeserver = safety.New()
+			address = fakeserver.Start("")
 		}
 
 		// Sometimes the server doesn't start immediately, so we check that an
@@ -53,8 +46,8 @@ func TestIntegration(t *testing.T) {
 	})
 
 	AfterSuite(func() {
-		if serverSession != nil {
-			serverSession.Terminate().Wait()
+		if fakeserver != nil {
+			Expect(fakeserver.Stop()).To(Succeed())
 		}
 
 		gexec.CleanupBuildArtifacts()
