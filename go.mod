@@ -8,11 +8,13 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/urfave/cli/v2 v2.10.2
-	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20220722132608-982d429ba641
+	github.com/warehouse-13/safety v0.0.0-20221207164058-27f5985eb045
+	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f
 	github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641
-	google.golang.org/grpc v1.47.0
+	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
+	k8s.io/utils v0.0.0-20230115233650-391b47cb4029
 )
 
 require (
@@ -33,7 +35,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/utils v0.0.0-20230115233650-391b47cb4029 // indirect
 )
 
 require (

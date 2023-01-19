@@ -245,8 +245,10 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/urfave/cli/v2 v2.10.2 h1:x3p8awjp/2arX+Nl/G2040AZpOCHS/eMJJ1/a+mye4Y=
 github.com/urfave/cli/v2 v2.10.2/go.mod h1:f8iq5LtQ/bLxafbdBSLPPNsgaW0l/2fYYEHhAyPlwvo=
-github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20220722132608-982d429ba641 h1:2Tx/ntYqeGY+/5KkHrofYloQ5qK0JIXSxEA3PEjEngc=
-github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20220722132608-982d429ba641/go.mod h1:JPML9O56MoPKGX97jfj++BtuFFS84jm4T+jWQBjO5Uc=
+github.com/warehouse-13/safety v0.0.0-20221207164058-27f5985eb045 h1:X5PZayrpXPpuhq6vOBCXUbIsdxv56L471p32RBqWDUc=
+github.com/warehouse-13/safety v0.0.0-20221207164058-27f5985eb045/go.mod h1:hTlI1j1CXNEYrNoGbw7bAPj1/maOkuvGgoi63donJ5I=
+github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f h1:xHtKo4eiR1pRZUrXxlGF3KDuoa6xYjBGuPP47M9eVWM=
+github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f/go.mod h1:JPML9O56MoPKGX97jfj++BtuFFS84jm4T+jWQBjO5Uc=
 github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641 h1:c5GlWX7UuBOQwx3Xfw4Jnd3VCHvChpkWaSVJhEbQcdo=
 github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641/go.mod h1:d65mpsT+pbMnMJZhUqeNtt7lcQnsX8cowl9dTRkniSI=
 github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 h1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=
@@ -554,8 +556,8 @@ google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv
 google.golang.org/grpc v1.34.0/go.mod h1:WotjhfgOW/POjDeRt8vscBtXq+2VjORFy659qA51WJ8=
 google.golang.org/grpc v1.36.0/go.mod h1:qjiiYl8FncCW8feJPdyg3v6XW24KsRHe+dy9BAGRRjU=
 google.golang.org/grpc v1.46.0/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
-google.golang.org/grpc v1.47.0 h1:9n77onPX5F3qfFCqjy9dhn8PbNQsIKeVU04J9G7umt8=
-google.golang.org/grpc v1.47.0/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
+google.golang.org/grpc v1.51.0 h1:E1eGv1FTqoLIdnBCZufiSHgKjlqG6fKFf6pPWtMTh8U=
+google.golang.org/grpc v1.51.0/go.mod h1:wgNDFcnuBGmxLKI/qn4T+m5BtEBYXJPvibbUPsAIPww=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
