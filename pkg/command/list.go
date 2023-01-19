@@ -1,6 +1,8 @@
 package command
 
 import (
+	"os"
+
 	"github.com/urfave/cli/v2"
 
 	"github.com/warehouse-13/hammertime/pkg/client"
@@ -16,6 +18,8 @@ func listCommand() *cli.Command {
 		},
 	}
 
+	w := utils.NewWriter(os.Stdout)
+
 	return &cli.Command{
 		Name:    "list",
 		Usage:   "list microvms",
@@ -27,12 +31,12 @@ func listCommand() *cli.Command {
 			flags.WithBasicAuthFlag(),
 		),
 		Action: func(c *cli.Context) error {
-			return ListFn(cfg)
+			return ListFn(w, cfg)
 		},
 	}
 }
 
-func ListFn(cfg *config.Config) error {
+func ListFn(w utils.Writer, cfg *config.Config) error {
 	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
@@ -45,5 +49,5 @@ func ListFn(cfg *config.Config) error {
 		return err
 	}
 
-	return utils.PrettyPrint(res)
+	return w.PrettyPrint(res)
 }
