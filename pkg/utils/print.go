@@ -26,7 +26,7 @@ func (w Writer) Print(output interface{}) {
 	fmt.Fprintln(w.out, output)
 }
 
-// Printf will write the given string to the Writer's out.
+// Printf will write the given string(s) to the Writer's out and apply given formatting.
 func (w Writer) Printf(format string, output ...interface{}) {
 	fmt.Fprintf(w.out, format, output...)
 }
@@ -39,18 +39,6 @@ func (w Writer) PrettyPrint(response interface{}) error {
 	}
 
 	fmt.Fprintf(w.out, "%s\n", string(resJSON))
-
-	return nil
-}
-
-// PrettyPrint will render the server's response nicely in JSON.
-func PrettyPrint(response interface{}) error {
-	resJSON, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("%s\n", string(resJSON))
 
 	return nil
 }
