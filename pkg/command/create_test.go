@@ -1,9 +1,7 @@
 package command_test
 
 import (
-	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -75,31 +73,24 @@ func Test_CreateFn_withFile(t *testing.T) {
 		testNamespace = "fns"
 	)
 
-	tempFile, err := ioutil.TempFile("", "createfn_test")
+	spec := &types.MicroVMSpec{
+		Id:        testName,
+		Namespace: testNamespace,
+	}
+
+	tempFile, err := writeFile(spec)
 	g.Expect(err).NotTo(HaveOccurred())
 
 	t.Cleanup(func() {
 		g.Expect(os.RemoveAll(tempFile.Name())).To(Succeed())
 	})
 
-	spec := &types.MicroVMSpec{
-		Id:        testName,
-		Namespace: testNamespace,
-	}
-
-	dat, err := json.Marshal(spec)
-	g.Expect(err).NotTo(HaveOccurred())
-
-	g.Expect(ioutil.WriteFile(tempFile.Name(), dat, 0755)).To(Succeed())
-
 	mockClient := new(fakeclient.FakeFlintlockClient)
 	cfg := &config.Config{
 		ClientConfig: config.ClientConfig{
 			ClientBuilderFunc: testClient(mockClient, nil),
 		},
-		MvmName:      testName,
-		MvmNamespace: testNamespace,
-		JSONFile:     tempFile.Name(),
+		JSONFile: tempFile.Name(),
 	}
 
 	mockClient.CreateReturns(createResponse(testName, testNamespace), nil)
@@ -113,28 +104,12 @@ func Test_CreateFn_withFile(t *testing.T) {
 func Test_CreateFn_withFile_fails(t *testing.T) {
 	g := NewWithT(t)
 
-	var (
-		testName      = "fname"
-		testNamespace = "fns"
-	)
-
-	tempFile, err := ioutil.TempFile("", "createfn_test")
-	g.Expect(err).NotTo(HaveOccurred())
-
-	t.Cleanup(func() {
-		g.Expect(os.RemoveAll(tempFile.Name())).To(Succeed())
-	})
-
-	g.Expect(ioutil.WriteFile(tempFile.Name(), []byte("foo"), 0755)).To(Succeed())
-
 	mockClient := new(fakeclient.FakeFlintlockClient)
 	cfg := &config.Config{
 		ClientConfig: config.ClientConfig{
 			ClientBuilderFunc: testClient(mockClient, nil),
 		},
-		MvmName:      testName,
-		MvmNamespace: testNamespace,
-		JSONFile:     tempFile.Name(),
+		JSONFile: "noexist",
 	}
 
 	g.Expect(command.CreateFn(cfg)).NotTo(Succeed())
