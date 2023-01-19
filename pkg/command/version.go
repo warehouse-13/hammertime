@@ -1,7 +1,7 @@
 package command
 
 import (
-	"fmt"
+	"os"
 
 	"github.com/urfave/cli/v2"
 
@@ -34,6 +34,8 @@ type versionInfo struct {
 }
 
 func VersionFn(ctx *cli.Context) error {
+	w := utils.NewWriter(os.Stdout)
+
 	if ctx.Bool("long") {
 		info := versionInfo{
 			version.PackageName,
@@ -42,10 +44,10 @@ func VersionFn(ctx *cli.Context) error {
 			version.BuildDate,
 		}
 
-		return utils.PrettyPrint(info)
+		return w.PrettyPrint(info)
 	}
 
-	fmt.Println(version.Version)
+	w.Print(version.Version)
 
 	return nil
 }
