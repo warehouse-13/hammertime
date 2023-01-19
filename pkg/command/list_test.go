@@ -1,14 +1,18 @@
 package command_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
 
 	"github.com/warehouse-13/hammertime/pkg/client/fakeclient"
 	"github.com/warehouse-13/hammertime/pkg/command"
 	"github.com/warehouse-13/hammertime/pkg/config"
+	"github.com/warehouse-13/hammertime/pkg/utils"
 )
 
 func Test_ListFn(t *testing.T) {
@@ -28,12 +32,22 @@ func Test_ListFn(t *testing.T) {
 		MvmNamespace: testNamespace,
 	}
 
-	mockClient.ListReturns(listResponse(1, testName, testNamespace), nil)
-	g.Expect(command.ListFn(cfg)).To(Succeed())
+	buf := &bytes.Buffer{}
+	w := utils.NewWriter(buf)
+
+	resp := listResponse(2, testName, testNamespace)
+	mockClient.ListReturns(resp, nil)
+	g.Expect(command.ListFn(w, cfg)).To(Succeed())
 
 	inName, inNamespace := mockClient.ListArgsForCall(0)
 	g.Expect(inName).To(Equal(testName))
 	g.Expect(inNamespace).To(Equal(testNamespace))
+
+	out := &v1alpha1.ListMicroVMsResponse{}
+	g.Expect(json.Unmarshal(buf.Bytes(), out)).To(Succeed())
+
+	g.Expect(out.Microvm).To(Equal(resp.Microvm))
+	g.Expect(out.Microvm).To(HaveLen(2))
 }
 
 func Test_ListFn_clientFails(t *testing.T) {
@@ -47,7 +61,7 @@ func Test_ListFn_clientFails(t *testing.T) {
 	}
 
 	mockClient.ListReturns(nil, errors.New("error"))
-	g.Expect(command.ListFn(cfg)).NotTo(Succeed())
+	g.Expect(command.ListFn(utils.NewWriter(nil), cfg)).NotTo(Succeed())
 }
 
 func Test_ListFn_clientBuilderFails(t *testing.T) {
@@ -60,5 +74,5 @@ func Test_ListFn_clientBuilderFails(t *testing.T) {
 		},
 	}
 
-	g.Expect(command.ListFn(cfg)).NotTo(Succeed())
+	g.Expect(command.ListFn(utils.NewWriter(nil), cfg)).NotTo(Succeed())
 }
