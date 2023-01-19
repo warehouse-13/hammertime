@@ -41,7 +41,7 @@ func deleteCommand() *cli.Command {
 	}
 }
 
-func DeleteFn(w utils.Writer, cfg *config.Config) error { //nolint: cyclop // we are refactoring this file
+func DeleteFn(w utils.Writer, cfg *config.Config) error {
 	client, err := cfg.ClientBuilderFunc(cfg.GRPCAddress, cfg.Token)
 	if err != nil {
 		return err
@@ -58,54 +58,62 @@ func DeleteFn(w utils.Writer, cfg *config.Config) error { //nolint: cyclop // we
 		}
 	}
 
+	// If it is possible to delete by set UUID, do that and exit
 	if utils.IsSet(cfg.UUID) {
-		res, err := client.Delete(cfg.UUID)
-		if err != nil {
-			return err
-		}
-
-		if cfg.Silent {
-			return nil
-		}
-
-		return w.PrettyPrint(res)
+		return deleteMvm(w, client, cfg.UUID, cfg.Silent)
 	}
 
-	if !cfg.DeleteAll {
-		if !utils.IsSet(cfg.MvmName) || !utils.IsSet(cfg.MvmNamespace) {
-			return fmt.Errorf("required: --namespace, --name")
-		}
+	// If UUID is not present, make sure that required spec is set
+	if missingSpec(cfg) {
+		return fmt.Errorf("required: --namespace, --name")
 	}
 
+	// Get all microvms
 	list, err := client.List(cfg.MvmName, cfg.MvmNamespace)
 	if err != nil {
 		return err
 	}
 
-	if utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) && !cfg.DeleteAll {
-		if len(list.Microvm) > 1 {
-			w.Printf("%d MicroVMs found under %s/%s:\n", len(list.Microvm), cfg.MvmNamespace, cfg.MvmName)
+	// Do not auto-delete multple mvms, inform and exit
+	if len(list.Microvm) > 1 && doNotDeleteAll(cfg) {
+		w.Printf("%d MicroVMs found under %s/%s:\n", len(list.Microvm), cfg.MvmNamespace, cfg.MvmName)
 
-			for _, mvm := range list.Microvm {
-				w.Print(*mvm.Spec.Uid)
-			}
-
-			return nil
+		for _, mvm := range list.Microvm {
+			w.Print(*mvm.Spec.Uid)
 		}
+
+		w.Print("\nTo delete all microvms in this list, re-run command with `--all`.")
+
+		return nil
 	}
 
+	// By this point we assume the user wants everything dead
 	for _, mvm := range list.Microvm {
-		res, err := client.Delete(*mvm.Spec.Uid)
-		if err != nil {
+		if err := deleteMvm(w, client, *mvm.Spec.Uid, cfg.Silent); err != nil {
 			return err
-		}
-
-		if !cfg.Silent {
-			if err := w.PrettyPrint(res); err != nil {
-				return err
-			}
 		}
 	}
 
 	return nil
+}
+
+func deleteMvm(w utils.Writer, c client.FlintlockClient, u string, s bool) error {
+	res, err := c.Delete(u)
+	if err != nil {
+		return err
+	}
+
+	if s {
+		return nil
+	}
+
+	return w.PrettyPrint(res)
+}
+
+func missingSpec(cfg *config.Config) bool {
+	return !cfg.DeleteAll && (!utils.IsSet(cfg.MvmName) || !utils.IsSet(cfg.MvmNamespace))
+}
+
+func doNotDeleteAll(cfg *config.Config) bool {
+	return utils.IsSet(cfg.MvmName) && utils.IsSet(cfg.MvmNamespace) && !cfg.DeleteAll
 }
