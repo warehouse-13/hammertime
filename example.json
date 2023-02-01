@@ -7,17 +7,27 @@
     "vcpu": 2,
     "memory_in_mb": 2048,
     "kernel": {
-      "image": "ghcr.io/weaveworks/flintlock-kernel:5.10.77",
+      "image": "ghcr.io/weaveworks-liquidmetal/kernel-bin:5.10.77",
       "filename": "boot/vmlinux",
       "add_network_config": true
     },
     "root_volume": {
-        "id": "root",
+      "id": "root",
+      "is_read_only": false,
+      "source": {
+        "container_source": "ghcr.io/weaveworks-liquidmetal/capmvm-k8s-os:1.23.5"
+      }
+    },
+    "additional_volumes": [
+      {
+        "id": "modules",
         "is_read_only": false,
         "source": {
-          "container_source": "ghcr.io/weaveworks/capmvm-kubernetes:1.21.8"
-        }
-      },
+          "container_source": "ghcr.io/weaveworks-liquidmetal/kernel-modules:5.10.77"
+        },
+        "mount_point": "/lib/modules/5.10.77"
+      }
+    ],
     "interfaces": [
       {
         "device_id": "eth1",

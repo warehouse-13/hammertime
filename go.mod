@@ -6,8 +6,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/urfave/cli/v2 v2.10.2
 	github.com/warehouse-13/safety v0.0.0-20230120170710-60c7451457c5
-	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f
-	github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641
+	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20230113160655-b1354ef6d578
+	github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20230113160655-b1354ef6d578
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0

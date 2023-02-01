@@ -249,8 +249,12 @@ github.com/warehouse-13/safety v0.0.0-20230120170710-60c7451457c5 h1:1uTkby9abQ0
 github.com/warehouse-13/safety v0.0.0-20230120170710-60c7451457c5/go.mod h1:hTlI1j1CXNEYrNoGbw7bAPj1/maOkuvGgoi63donJ5I=
 github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f h1:xHtKo4eiR1pRZUrXxlGF3KDuoa6xYjBGuPP47M9eVWM=
 github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f/go.mod h1:JPML9O56MoPKGX97jfj++BtuFFS84jm4T+jWQBjO5Uc=
+github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20230113160655-b1354ef6d578 h1:6LaBzWSOaaFI3fJ1oDDlfnlAmtPisrslVF+ZnmSKxr0=
+github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20230113160655-b1354ef6d578/go.mod h1:JPML9O56MoPKGX97jfj++BtuFFS84jm4T+jWQBjO5Uc=
 github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641 h1:c5GlWX7UuBOQwx3Xfw4Jnd3VCHvChpkWaSVJhEbQcdo=
 github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641/go.mod h1:d65mpsT+pbMnMJZhUqeNtt7lcQnsX8cowl9dTRkniSI=
+github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20230113160655-b1354ef6d578 h1:mBms3Efnv+YVbfMxN7/rHGveua8oteJwWreYfeYYTRE=
+github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20230113160655-b1354ef6d578/go.mod h1:d65mpsT+pbMnMJZhUqeNtt7lcQnsX8cowl9dTRkniSI=
 github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 h1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=
 github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673/go.mod h1:N3UwUGtsrSj3ccvlPHLoLsHnpR27oXr4ZE984MbSER8=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
