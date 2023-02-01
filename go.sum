@@ -245,8 +245,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/urfave/cli/v2 v2.10.2 h1:x3p8awjp/2arX+Nl/G2040AZpOCHS/eMJJ1/a+mye4Y=
 github.com/urfave/cli/v2 v2.10.2/go.mod h1:f8iq5LtQ/bLxafbdBSLPPNsgaW0l/2fYYEHhAyPlwvo=
-github.com/warehouse-13/safety v0.0.0-20221207164058-27f5985eb045 h1:X5PZayrpXPpuhq6vOBCXUbIsdxv56L471p32RBqWDUc=
-github.com/warehouse-13/safety v0.0.0-20221207164058-27f5985eb045/go.mod h1:hTlI1j1CXNEYrNoGbw7bAPj1/maOkuvGgoi63donJ5I=
+github.com/warehouse-13/safety v0.0.0-20230120170710-60c7451457c5 h1:1uTkby9abQ0d0RJIYrKxZsfDZoWdWEb/KoaCnDqImtI=
+github.com/warehouse-13/safety v0.0.0-20230120170710-60c7451457c5/go.mod h1:hTlI1j1CXNEYrNoGbw7bAPj1/maOkuvGgoi63donJ5I=
 github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f h1:xHtKo4eiR1pRZUrXxlGF3KDuoa6xYjBGuPP47M9eVWM=
 github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f/go.mod h1:JPML9O56MoPKGX97jfj++BtuFFS84jm4T+jWQBjO5Uc=
 github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641 h1:c5GlWX7UuBOQwx3Xfw4Jnd3VCHvChpkWaSVJhEbQcdo=
