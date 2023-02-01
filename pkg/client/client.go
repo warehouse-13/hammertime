@@ -17,7 +17,7 @@ import (
 // Client is a wrapper around a v1alpha1.MicroVMClient.
 type Client struct {
 	v1alpha1.MicroVMClient
-	conn *grpc.ClientConn
+	Conn *grpc.ClientConn
 }
 
 //counterfeiter:generate -o fakeclient/ . FlintlockClient
@@ -31,7 +31,7 @@ type FlintlockClient interface {
 
 // New returns a new flintlock Client.
 func New(address, basicAuthToken string) (FlintlockClient, error) {
-	conn, err := dialler.New(address, basicAuthToken)
+	conn, err := dialler.New(address, basicAuthToken, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func New(address, basicAuthToken string) (FlintlockClient, error) {
 }
 
 func (c *Client) Close() error {
-	return c.conn.Close()
+	return c.Conn.Close()
 }
 
 // Create creates a new Microvm with the MicroVMClient.

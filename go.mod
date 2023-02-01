@@ -3,12 +3,9 @@ module github.com/warehouse-13/hammertime
 go 1.18
 
 require (
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/urfave/cli/v2 v2.10.2
-	github.com/warehouse-13/safety v0.0.0-20221207164058-27f5985eb045
+	github.com/warehouse-13/safety v0.0.0-20230120170710-60c7451457c5
 	github.com/weaveworks-liquidmetal/flintlock/api v0.0.0-20221117153111-bd29de31356f
 	github.com/weaveworks-liquidmetal/flintlock/client v0.0.0-20220722132608-982d429ba641
 	google.golang.org/grpc v1.51.0
@@ -23,7 +20,10 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/prometheus/client_golang v1.13.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
