@@ -17,9 +17,14 @@ const (
 
 const (
 	// KernelImage is the default MVM kernel image.
-	KernelImage = "ghcr.io/weaveworks/flintlock-kernel:5.10.77"
-	// CloudImage is the default MVM cloud image.
-	CloudImage = "ghcr.io/weaveworks/capmvm-kubernetes:1.21.8"
+	KernelImage = "ghcr.io/weaveworks-liquidmetal/kernel-bin:5.10.77"
+	// ModulesImage is the default MVM kernel image.
+	ModulesImage = "ghcr.io/weaveworks-liquidmetal/kernel-modules:5.10.77"
+	// OSImage is the default MVM OS image.
+	OSImage = "ghcr.io/weaveworks-liquidmetal/capmvm-k8s-os:1.23.5"
+
+	kernelFilename = "boot/vmlinux"
+	modulesPath    = "/lib/modules/5.10.77"
 )
 
 func BaseMicroVM() *types.MicroVMSpec {
@@ -28,14 +33,24 @@ func BaseMicroVM() *types.MicroVMSpec {
 		MemoryInMb: 2048, //nolint: gomnd // we don't care
 		Kernel: &types.Kernel{
 			Image:            KernelImage,
-			Filename:         pointer.String("boot/vmlinux"),
+			Filename:         pointer.String(kernelFilename),
 			AddNetworkConfig: true,
 		},
 		RootVolume: &types.Volume{
 			Id:         "root",
 			IsReadOnly: false,
 			Source: &types.VolumeSource{
-				ContainerSource: pointer.String(CloudImage),
+				ContainerSource: pointer.String(OSImage),
+			},
+		},
+		AdditionalVolumes: []*types.Volume{
+			{
+				Id:         "modules",
+				IsReadOnly: false,
+				Source: &types.VolumeSource{
+					ContainerSource: pointer.String(ModulesImage),
+				},
+				MountPoint: pointer.String(modulesPath),
 			},
 		},
 		Interfaces: []*types.NetworkInterface{
